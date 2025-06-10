@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Car, Users, MessageCircle, Search } from "lucide-react"
-import { Navigation } from "./components/navigation"
+import { Navigation } from "../components/navigation"
 
 export default function HomePage() {
   return (

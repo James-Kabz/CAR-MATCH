@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Car, DollarSign, MapPin, Calendar, MessageCircle } from "lucide-react"
+import { EditListingModal } from "@/components/modals/edit-listing-modal"
+import { RespondInquiryModal } from "@/components/modals/respond-inquiry-modal"
+import { DeleteListingModal } from "@/components/modals/delete-listing-modal"
 
 interface Listing {
   id: string
@@ -48,8 +51,41 @@ export function SellerDashboard() {
     location: "",
   })
 
+  const [editModal, setEditModal] = useState<{
+    isOpen: boolean
+    listing: Listing | null
+  }>({
+    isOpen: false,
+    listing: null,
+  })
+
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean
+    listingId: string
+    listingTitle: string
+  }>({
+    isOpen: false,
+    listingId: "",
+    listingTitle: "",
+  })
+
+  const [respondModal, setRespondModal] = useState<{
+    isOpen: boolean
+    inquiryId: string
+    buyerName: string
+    inquiryMessage: string
+  }>({
+    isOpen: false,
+    inquiryId: "",
+    buyerName: "",
+    inquiryMessage: "",
+  })
+
+  const [inquiries, setInquiries] = useState<any[]>([])
+
   useEffect(() => {
     fetchListings()
+    fetchInquiries()
   }, [])
 
   const fetchListings = async () => {
@@ -59,6 +95,16 @@ export function SellerDashboard() {
       setListings(data.listings || [])
     } catch (error) {
       console.error("Error fetching listings:", error)
+    }
+  }
+
+  const fetchInquiries = async () => {
+    try {
+      const response = await fetch("/api/inquiries")
+      const data = await response.json()
+      setInquiries(data.inquiries || [])
+    } catch (error) {
+      console.error("Error fetching inquiries:", error)
     }
   }
 
@@ -344,12 +390,35 @@ export function SellerDashboard() {
                         {listing.mileage && `${listing.mileage.toLocaleString()} miles`}
                       </div>
                       <div className="space-x-2">
-                        <Button size="sm" variant="outline">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setEditModal({
+                              isOpen: true,
+                              listing,
+                            })
+                          }
+                        >
                           Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 hover:text-red-700"
+                          onClick={() =>
+                            setDeleteModal({
+                              isOpen: true,
+                              listingId: listing.id,
+                              listingTitle: listing.title,
+                            })
+                          }
+                        >
+                          Delete
                         </Button>
                         <Button size="sm" variant="outline">
                           <MessageCircle className="h-4 w-4 mr-2" />
-                          View Inquiries
+                          View Inquiries ({inquiries.filter((inq) => inq.listing.id === listing.id).length})
                         </Button>
                       </div>
                     </div>
@@ -365,15 +434,77 @@ export function SellerDashboard() {
       {activeTab === "inquiries" && (
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">Buyer Inquiries</h2>
-          <Card>
-            <CardContent className="text-center py-8">
-              <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No inquiries yet</h3>
-              <p className="text-gray-600">When buyers are interested in your cars, their messages will appear here</p>
-            </CardContent>
-          </Card>
+          {inquiries.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-8">
+                <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No inquiries yet</h3>
+                <p className="text-gray-600">
+                  When buyers are interested in your cars, their messages will appear here
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            inquiries.map((inquiry) => (
+              <Card key={inquiry.id}>
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold">{inquiry.listing.title}</h3>
+                      <p className="text-gray-600">From: {inquiry.buyer.name}</p>
+                    </div>
+                    <Badge variant={inquiry.status === "PENDING" ? "destructive" : "default"}>{inquiry.status}</Badge>
+                  </div>
+
+                  <p className="text-gray-700 mb-4">{inquiry.message}</p>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">{new Date(inquiry.createdAt).toLocaleDateString()}</span>
+                    {inquiry.status === "PENDING" && (
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          setRespondModal({
+                            isOpen: true,
+                            inquiryId: inquiry.id,
+                            buyerName: inquiry.buyer.name,
+                            inquiryMessage: inquiry.message,
+                          })
+                        }
+                      >
+                        Respond
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       )}
+
+      <EditListingModal
+        isOpen={editModal.isOpen}
+        onClose={() => setEditModal({ isOpen: false, listing: null })}
+        listing={editModal.listing!}
+        onUpdate={fetchListings}
+      />
+
+      <RespondInquiryModal
+        isOpen={respondModal.isOpen}
+        onClose={() => setRespondModal({ ...respondModal, isOpen: false })}
+        inquiryId={respondModal.inquiryId}
+        buyerName={respondModal.buyerName}
+        inquiryMessage={respondModal.inquiryMessage}
+      />
+
+      <DeleteListingModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, listingId: "", listingTitle: "" })}
+        listingId={deleteModal.listingId}
+        listingTitle={deleteModal.listingTitle}
+        onDelete={fetchListings}
+      />
     </div>
   )
 }

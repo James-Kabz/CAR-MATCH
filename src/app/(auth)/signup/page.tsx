@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Car } from "lucide-react"
-import { Navigation } from "@/app/components/navigation"
+import { Navigation } from "@/components/navigation"
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({

@@ -1,0 +1,189 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
+import { Heart, MapPin, DollarSign, Car, MessageCircle } from "lucide-react"
+import { Navigation } from "@/components/navigation"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { ContactSellerModal } from "@/components/modals/contact-seller-modal"
+
+interface Favorite {
+  id: string
+  listing: {
+    id: string
+    title: string
+    brand: string
+    model: string
+    year: number
+    price: number
+    condition: string
+    carType: string
+    location: string
+    seller: {
+      id: string
+      name: string
+    }
+  }
+}
+
+export default function FavoritesPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  const [favorites, setFavorites] = useState<Favorite[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [contactModal, setContactModal] = useState<{
+    isOpen: boolean
+    listingId: string
+    listingTitle: string
+    sellerName: string
+  }>({
+    isOpen: false,
+    listingId: "",
+    listingTitle: "",
+    sellerName: "",
+  })
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/signin")
+    }
+  }, [status, router])
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchFavorites()
+    }
+  }, [session])
+
+  const fetchFavorites = async () => {
+    try {
+      const response = await fetch("/api/favorites")
+      const data = await response.json()
+      setFavorites(data.favorites || [])
+    } catch (error) {
+      console.error("Error fetching favorites:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const removeFavorite = async (favoriteId: string) => {
+    try {
+      const response = await fetch(`/api/favorites/${favoriteId}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        setFavorites(favorites.filter((fav) => fav.id !== favoriteId))
+      }
+    } catch (error) {
+      console.error("Error removing favorite:", error)
+    }
+  }
+
+  if (status === "loading" || isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-lg">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!session) {
+    return null
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+
+      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">My Favorites</h1>
+          <p className="text-gray-600">Cars you've saved for later</p>
+        </div>
+
+        {favorites.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No favorites yet</h3>
+              <p className="text-gray-600">Start browsing cars and save your favorites here</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {favorites.map((favorite) => (
+              <Card key={favorite.id} className="overflow-hidden">
+                <CardContent className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold">{favorite.listing.title}</h3>
+                      <p className="text-gray-600">
+                        {favorite.listing.year} {favorite.listing.brand} {favorite.listing.model}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => removeFavorite(favorite.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Heart className="h-4 w-4 fill-current" />
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center text-sm text-gray-600">
+                      <DollarSign className="h-4 w-4 mr-1" />${favorite.listing.price.toLocaleString()}
+                    </div>
+                    <div className="flex items-center text-sm text-gray-600">
+                      <MapPin className="h-4 w-4 mr-1" />
+                      {favorite.listing.location}
+                    </div>
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Car className="h-4 w-4 mr-1" />
+                      {favorite.listing.carType}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline">{favorite.listing.condition}</Badge>
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        setContactModal({
+                          isOpen: true,
+                          listingId: favorite.listing.id,
+                          listingTitle: favorite.listing.title,
+                          sellerName: favorite.listing.seller.name,
+                        })
+                      }
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Contact
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <ContactSellerModal
+        isOpen={contactModal.isOpen}
+        onClose={() => setContactModal({ ...contactModal, isOpen: false })}
+        listingId={contactModal.listingId}
+        listingTitle={contactModal.listingTitle}
+        sellerName={contactModal.sellerName}
+      />
+    </div>
+  )
+}
