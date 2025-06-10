@@ -1,0 +1,153 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?   @db.Text
+  image         String?
+  role          UserRole  @default(BUYER)
+  phone         String?
+  location      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  listings      Listing[]
+  buyerRequests BuyerRequest[]
+  sentMessages  Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  matches       Match[]
+}
+
+model Listing {
+  id          String      @id @default(cuid())
+  title       String
+  brand       String
+  model       String
+  year        Int
+  price       Int
+  condition   Condition
+  carType     CarType
+  mileage     Int?
+  description String?
+  location    String
+  images      String[]
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  sellerId    String
+  seller      User        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  matches     Match[]
+}
+
+model BuyerRequest {
+  id          String   @id @default(cuid())
+  minBudget   Int
+  maxBudget   Int
+  brand       String?
+  model       String?
+  carType     CarType?
+  location    String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  buyerId     String
+  buyer       User     @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  matches     Match[]
+}
+
+model Match {
+  id          String    @id @default(cuid())
+  score       Float
+  isViewed    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  buyerId     String
+  buyer       User      @relation(fields: [buyerId], references: [id])
+  listingId   String
+  listing     Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  requestId   String
+  request     BuyerRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@unique([buyerId, listingId, requestId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  senderId  String
+  sender    User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver  User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+}
+
+enum UserRole {
+  BUYER
+  SELLER
+}
+
+enum CarType {
+  SEDAN
+  SUV
+  HATCHBACK
+  COUPE
+  CONVERTIBLE
+  TRUCK
+  VAN
+  WAGON
+}
+
+enum Condition {
+  NEW
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+}
