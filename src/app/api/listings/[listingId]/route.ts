@@ -44,6 +44,7 @@ export async function PUT(request: NextRequest) {
         description,
         location,
         isActive,
+        images: existingListing.images,
       },
     })
 
