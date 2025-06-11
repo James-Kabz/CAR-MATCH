@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
-export async function POST(request: NextRequest) {
+export async function POST( request: NextRequest,{ params }: { params: Promise<{ inquiryId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -13,12 +13,11 @@ export async function POST(request: NextRequest) {
 
     const { response } = await request.json()
     const userId = session.user.id
+    const { inquiryId } = await params
 
-    const { pathname } = new URL(request.url);
-    const id = pathname.split("/").pop();
     // Get the inquiry
     const inquiry = await prisma.inquiry.findUnique({
-      where: { id },
+      where: { id: inquiryId },
     })
 
     if (!inquiry) {
@@ -73,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     // Update inquiry status
     const updatedInquiry = await prisma.inquiry.update({
-      where: { id },
+      where: { id: inquiryId },
       data: { status: "RESPONDED" },
       include: {
         buyer: {

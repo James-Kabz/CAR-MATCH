@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
-export async function PUT(request: NextRequest ) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ messageId: string }> } ) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -11,8 +11,7 @@ export async function PUT(request: NextRequest ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { pathname } = new URL(request.url);
-    const messageId = pathname.split("/").pop();
+    const { messageId } = await params
 
     const userId = session.user.id
 
