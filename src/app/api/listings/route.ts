@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
         description,
         location,
         images: images || [],
-        sellerId: session.user.id,
+        sellerId: session.user.id ?? "",
       },
     })
 

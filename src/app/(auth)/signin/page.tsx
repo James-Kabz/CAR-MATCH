@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Car } from "lucide-react"
-import { Navigation } from "@/app/components/navigation"
+import { Navigation } from "@/components/navigation"
 
 export default function SignInPage() {
   const [email, setEmail] = useState("")
@@ -20,7 +20,7 @@ export default function SignInPage() {
   const [error, setError] = useState("")
   const router = useRouter()
   const searchParams = useSearchParams()
-  const message = searchParams.get("message")
+  const message = searchParams?.get("message")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

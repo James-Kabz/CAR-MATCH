@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Car, User, LogOut, MessageCircle } from "lucide-react"
+import { Car, User, LogOut, MessageCircle, Heart } from "lucide-react"
 
 export function Navigation() {
   const { data: session } = useSession()
@@ -31,6 +31,12 @@ export function Navigation() {
                   <Button variant="ghost" size="sm">
                     <MessageCircle className="h-4 w-4 mr-2" />
                     Messages
+                  </Button>
+                </Link>
+                <Link href="/favorites">
+                  <Button variant="ghost" size="sm">
+                    <Heart className="h-4 w-4 mr-2" />
+                    Favorites
                   </Button>
                 </Link>
                 <div className="flex items-center space-x-2">

@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
         model,
         carType,
         location,
-        buyerId: session.user.id,
+        buyerId: session.user.id ?? "",
       },
     })
 

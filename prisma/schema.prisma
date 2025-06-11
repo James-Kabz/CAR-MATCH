@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -60,6 +54,11 @@ model User {
   sentMessages  Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
   matches       Match[]
+  chatRooms     ChatRoomUser[]
+  sentChatMessages ChatMessage[] @relation("SentChatMessages")
+  inquiries     Inquiry[] @relation("ReceivedInquiries")
+  sentInquiries Inquiry[] @relation("SentInquiries")
+  favorites     Favorite[]
 }
 
 model Listing {
@@ -78,10 +77,13 @@ model Listing {
   isActive    Boolean     @default(true)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  views       Int         @default(0)
 
   sellerId    String
   seller      User        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   matches     Match[]
+  inquiries   Inquiry[]
+  favorites   Favorite[]
 }
 
 model BuyerRequest {
@@ -128,6 +130,66 @@ model Message {
   receiver  User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
 }
 
+model ChatRoom {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  users     ChatRoomUser[]
+  messages  ChatMessage[]
+}
+
+model ChatRoomUser {
+  id        String   @id @default(cuid())
+  userId    String
+  chatRoomId String
+  joinedAt  DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatRoom  ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, chatRoomId])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  isRead    Boolean  @default(false)
+  
+  senderId  String
+  sender    User     @relation("SentChatMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  chatRoomId String
+  chatRoom  ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+}
+
+model Inquiry {
+  id        String   @id @default(cuid())
+  message   String
+  status    InquiryStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  buyerId   String
+  buyer     User     @relation("SentInquiries", fields: [buyerId], references: [id], onDelete: Cascade)
+  sellerId  String
+  seller    User     @relation("ReceivedInquiries", fields: [sellerId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, listingId])
+}
+
 enum UserRole {
   BUYER
   SELLER
@@ -150,4 +212,10 @@ enum Condition {
   GOOD
   FAIR
   POOR
+}
+
+enum InquiryStatus {
+  PENDING
+  RESPONDED
+  CLOSED
 }

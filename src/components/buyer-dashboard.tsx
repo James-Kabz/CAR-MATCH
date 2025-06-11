@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Search, Car, MapPin, DollarSign, MessageCircle } from "lucide-react"
+import { ContactSellerModal } from "@/components/modals/contact-seller-modal"
 
 interface BuyerRequest {
   id: string
@@ -56,6 +57,18 @@ export function BuyerDashboard() {
     model: "",
     carType: "",
     location: "",
+  })
+
+  const [contactModal, setContactModal] = useState<{
+    isOpen: boolean
+    listingId: string
+    listingTitle: string
+    sellerName: string
+  }>({
+    isOpen: false,
+    listingId: "",
+    listingTitle: "",
+    sellerName: "",
   })
 
   useEffect(() => {
@@ -295,7 +308,17 @@ export function BuyerDashboard() {
 
                   <div className="flex justify-between items-center">
                     <div className="text-sm text-gray-600">Seller: {match.listing.seller.name}</div>
-                    <Button size="sm">
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        setContactModal({
+                          isOpen: true,
+                          listingId: match.listing.id,
+                          listingTitle: match.listing.title,
+                          sellerName: match.listing.seller.name,
+                        })
+                      }
+                    >
                       <MessageCircle className="h-4 w-4 mr-2" />
                       Contact Seller
                     </Button>
@@ -361,6 +384,13 @@ export function BuyerDashboard() {
           )}
         </div>
       )}
+      <ContactSellerModal
+        isOpen={contactModal.isOpen}
+        onClose={() => setContactModal({ ...contactModal, isOpen: false })}
+        listingId={contactModal.listingId}
+        listingTitle={contactModal.listingTitle}
+        sellerName={contactModal.sellerName}
+      />
     </div>
   )
 }
