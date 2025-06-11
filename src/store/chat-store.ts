@@ -11,6 +11,8 @@ interface ChatState {
   chats: ChatRoomWithUsers[]
   isLoading: boolean
   error: string | null
+  lastFetchTime: number
+  isProduction: boolean
   setActiveChat: (chatId: string | null) => void
   fetchChats: () => Promise<void>
   sendMessage: (content: string) => Promise<void>
@@ -24,6 +26,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
   chats: [],
   isLoading: false,
   error: null,
+  lastFetchTime: 0,
+  isProduction:
+    typeof window !== "undefined" &&
+    (process.env.NODE_ENV === "production" || window.location.hostname !== "localhost"),
 
   setActiveChat: (chatId) => {
     if (!chatId) {
@@ -36,14 +42,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   fetchChats: async () => {
-    set({ isLoading: true, error: null })
+    const now = Date.now()
+    const { lastFetchTime, isLoading, isProduction } = get()
+
+    // Adjust debounce time based on environment
+    const debounceTime = isProduction ? 1000 : 2000
+
+    // Prevent fetching too frequently (debounce)
+    if (isLoading || now - lastFetchTime < debounceTime) {
+      return
+    }
+
+    set({ isLoading: true, error: null, lastFetchTime: now })
+
     try {
-      const response = await fetch("/api/chats")
+      const response = await fetch("/api/chats", {
+        cache: "no-store", // Ensure fresh data in production
+      })
       if (!response.ok) throw new Error("Failed to fetch chats")
 
       const data = await response.json()
       const chats = data.chats || []
 
+      // Update chats
       set({ chats, isLoading: false })
 
       // Update active chat if it exists in the new data
@@ -55,6 +76,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
       }
     } catch (error) {
+      console.error("Error fetching chats:", error)
       set({ error: error instanceof Error ? error.message : "Unknown error", isLoading: false })
     }
   },
@@ -78,17 +100,27 @@ export const useChatStore = create<ChatState>((set, get) => ({
       get().addMessage(message)
       get().updateChatLastMessage(activeChat.id, message)
     } catch (error) {
+      console.error("Error sending message:", error)
       set({ error: error instanceof Error ? error.message : "Unknown error" })
     }
   },
 
   markAsRead: async (messageId) => {
     try {
-      await fetch(`/api/chats/messages/${messageId}/read`, {
+      const response = await fetch(`/api/chats/messages/${messageId}/read`, {
         method: "PUT",
       })
 
-      // Update local state
+      if (!response.ok) {
+        // If the message doesn't exist or is already read, don't throw an error
+        if (response.status === 404) {
+          console.warn(`Message ${messageId} not found or already processed`)
+          return
+        }
+        throw new Error(`Failed to mark message as read: ${response.status}`)
+      }
+
+      // Update local state optimistically
       const { chats, activeChat } = get()
 
       const updatedChats = chats.map((chat) => ({
@@ -96,7 +128,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         messages: chat.messages.map((msg) => (msg.id === messageId ? { ...msg, isRead: true } : msg)),
       }))
 
-      let updatedActiveChat = null
+      let updatedActiveChat = activeChat
       if (activeChat) {
         updatedActiveChat = {
           ...activeChat,
@@ -109,29 +141,36 @@ export const useChatStore = create<ChatState>((set, get) => ({
         activeChat: updatedActiveChat,
       })
     } catch (error) {
-      set({ error: error instanceof Error ? error.message : "Unknown error" })
+      console.error("Error marking message as read:", error)
+      // Don't set error state for read status failures to avoid UI disruption
     }
   },
 
   addMessage: (message) => {
     const { activeChat, chats } = get()
 
+    // Update active chat if it matches
     if (activeChat && activeChat.id === message.chatRoomId) {
-      // Add to active chat if it matches
-      const updatedActiveChat = {
-        ...activeChat,
-        messages: [...activeChat.messages, message],
+      const messageExists = activeChat.messages.some((msg) => msg.id === message.id)
+      if (!messageExists) {
+        const updatedActiveChat = {
+          ...activeChat,
+          messages: [...activeChat.messages, message],
+        }
+        set({ activeChat: updatedActiveChat })
       }
-      set({ activeChat: updatedActiveChat })
     }
 
     // Update the chat in the chats list
     const updatedChats = chats.map((chat) => {
       if (chat.id === message.chatRoomId) {
-        return {
-          ...chat,
-          messages: [...chat.messages, message],
-          updatedAt: new Date(),
+        const messageExists = chat.messages.some((msg) => msg.id === message.id)
+        if (!messageExists) {
+          return {
+            ...chat,
+            messages: [...chat.messages, message],
+            updatedAt: new Date(),
+          }
         }
       }
       return chat

@@ -2,10 +2,10 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useSession } from "next-auth/react"
 import { format } from "date-fns"
-import { Send, Loader2, Wifi, WifiOff } from "lucide-react"
+import { Send, Loader2, Wifi, WifiOff, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -15,29 +15,96 @@ import { useSocket } from "@/hooks/use-socket"
 
 export function ChatInterface() {
   const { data: session } = useSession()
-  const { activeChat, chats, fetchChats, sendMessage, markAsRead } = useChatStore()
-  const { socket, isConnected } = useSocket()
+  const { activeChat, fetchChats, sendMessage, markAsRead } = useChatStore()
+  const {
+    socket,
+    isConnected,
+    isProduction,
+    joinRoom,
+    leaveRoom,
+    sendMessage: socketSendMessage,
+    sendTyping,
+  } = useSocket()
   const [message, setMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
   const [typingUsers, setTypingUsers] = useState<string[]>([])
+  const [processedMessageIds, setProcessedMessageIds] = useState<Set<string>>(new Set())
+  const [lastMessageCount, setLastMessageCount] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout>(null)
+  const pollingIntervalRef = useRef<NodeJS.Timeout>(null)
+  const currentChatIdRef = useRef<string | null>(null)
+  const hasInitializedRef = useRef(false)
 
-  // Join chat room when active chat changes
+  // Memoize current user ID to prevent unnecessary re-renders
+  const currentUserId = useMemo(() => session?.user?.id, [session?.user?.id])
+
+  // Memoize other user data
+  const otherUser = useMemo(() => {
+    return activeChat?.users.find((u) => u.user.id !== currentUserId)?.user
+  }, [activeChat?.users, currentUserId])
+
+  // Fetch chats only once on mount
   useEffect(() => {
-    if (!socket || !activeChat) return
-
-    socket.emit("join-chat", activeChat.id)
-
-    // Listen for new messages
-    const handleNewMessage = (data: any) => {
+    if (!hasInitializedRef.current) {
+      hasInitializedRef.current = true
       fetchChats()
     }
+  }, []) // Empty dependency array - only run once
 
-    // Listen for typing indicators
+  // Set up polling for production or real-time updates for development
+  useEffect(() => {
+    if (!activeChat?.id) return
+
+    if (isProduction) {
+      // Use polling in production
+      console.log("Setting up polling for chat updates")
+      pollingIntervalRef.current = setInterval(() => {
+        fetchChats()
+      }, 3000) // Poll every 3 seconds
+
+      return () => {
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current)
+        }
+      }
+    } else {
+      // Use real-time updates in development
+      if (!socket || !isConnected) return
+
+      // Leave previous room if exists
+      if (currentChatIdRef.current && currentChatIdRef.current !== activeChat.id) {
+        leaveRoom(currentChatIdRef.current)
+        setTypingUsers([])
+      }
+
+      // Join new room
+      currentChatIdRef.current = activeChat.id
+      joinRoom(activeChat.id)
+      // setProcessedMessageIds(new Set())
+
+      return () => {
+        if (currentChatIdRef.current) {
+          leaveRoom(currentChatIdRef.current)
+        }
+      }
+    }
+  }, [activeChat?.id, isProduction, socket, isConnected, joinRoom, leaveRoom, fetchChats])
+
+  // Handle socket events (development only)
+  useEffect(() => {
+    if (isProduction || !socket || !isConnected) return
+
+    const handleNewMessage = (data: any) => {
+      console.log("Received new message:", data)
+      if (data.chatRoomId === activeChat?.id) {
+        fetchChats()
+      }
+    }
+
     const handleUserTyping = (data: { userId: string; isTyping: boolean }) => {
-      if (data.userId !== session?.user?.id) {
+      if (data.userId !== currentUserId) {
         setTypingUsers((prev) => {
           if (data.isTyping) {
             return prev.includes(data.userId) ? prev : [...prev, data.userId]
@@ -52,89 +119,156 @@ export function ChatInterface() {
     socket.on("user-typing", handleUserTyping)
 
     return () => {
-      socket.emit("leave-chat", activeChat.id)
       socket.off("new-message", handleNewMessage)
       socket.off("user-typing", handleUserTyping)
     }
-  }, [socket, activeChat, fetchChats, session])
-
-  // Fetch chats on component mount
-  useEffect(() => {
-    fetchChats()
-  }, [fetchChats])
+  }, [socket, isConnected, isProduction, activeChat?.id, currentUserId, fetchChats])
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [activeChat?.messages])
+    if (messagesEndRef.current && activeChat?.messages?.length !== lastMessageCount) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+      setLastMessageCount(activeChat?.messages?.length || 0)
+    }
+  }, [activeChat?.messages?.length, lastMessageCount])
 
-  // Mark unread messages as read
+  // Mark unread messages as read - optimized to prevent loops
   useEffect(() => {
-    if (!activeChat || !session?.user) return
+    if (!activeChat?.messages || !currentUserId) return
 
-    const unreadMessages = activeChat.messages.filter((msg) => !msg.isRead && msg.sender.id !== session?.user?.id)
+    const unreadMessages = activeChat.messages.filter(
+      (msg) => !msg.isRead && msg.sender.id !== currentUserId && !processedMessageIds.has(msg.id),
+    )
 
-    unreadMessages.forEach((msg) => {
-      markAsRead(msg.id)
-    })
-  }, [activeChat, session, markAsRead])
+    if (unreadMessages.length === 0) return
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!message.trim() || !activeChat || !socket) return
+    // Mark messages as processed immediately to prevent re-processing
+    const newProcessedIds = new Set(processedMessageIds)
+    unreadMessages.forEach((msg) => newProcessedIds.add(msg.id))
+    setProcessedMessageIds(newProcessedIds)
 
-    setIsLoading(true)
-
-    try {
-      await sendMessage(message)
-
-      // Emit the message via socket for real-time updates
-      socket.emit("send-message", {
-        chatRoomId: activeChat.id,
-        content: message,
-        senderId: session?.user?.id,
-      })
-
-      setMessage("")
-    } catch (error) {
-      console.error("Error sending message:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleTyping = (value: string) => {
-    setMessage(value)
-
-    if (!socket || !activeChat || !session?.user) return
-
-    // Send typing indicator
-    if (!isTyping && value.length > 0) {
-      setIsTyping(true)
-      socket.emit("typing", {
-        chatRoomId: activeChat.id,
-        userId: session.user.id,
-        isTyping: true,
-      })
+    // Process messages asynchronously
+    const processMessages = async () => {
+      try {
+        await Promise.all(
+          unreadMessages.map(async (msg) => {
+            try {
+              await markAsRead(msg.id)
+            } catch (error) {
+              console.error(`Failed to mark message ${msg.id} as read:`, error)
+              // Remove from processed set if failed
+              setProcessedMessageIds((prev) => {
+                const newSet = new Set(prev)
+                newSet.delete(msg.id)
+                return newSet
+              })
+            }
+          }),
+        )
+      } catch (error) {
+        console.error("Error processing read status:", error)
+      }
     }
 
-    // Clear previous timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current)
-    }
+    processMessages()
+  }, [activeChat?.messages, currentUserId, markAsRead, processedMessageIds])
 
-    // Set timeout to stop typing indicator
-    typingTimeoutRef.current = setTimeout(() => {
-      if (isTyping) {
-        setIsTyping(false)
-        socket.emit("typing", {
+  const handleSendMessage = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault()
+      if (!message.trim() || !activeChat) return
+
+      setIsLoading(true)
+
+      try {
+        // Send message to database
+        await sendMessage(message)
+
+        // In development, emit via socket for real-time updates
+        if (!isProduction && isConnected) {
+          socketSendMessage({
+            chatRoomId: activeChat.id,
+            content: message,
+            senderId: currentUserId,
+          })
+        } else {
+          // In production, refresh the chat immediately
+          setTimeout(() => {
+            fetchChats()
+          }, 500)
+        }
+
+        setMessage("")
+
+        // Stop typing indicator (development only)
+        if (!isProduction && isTyping) {
+          setIsTyping(false)
+          sendTyping({
+            chatRoomId: activeChat.id,
+            userId: currentUserId,
+            isTyping: false,
+          })
+        }
+      } catch (error) {
+        console.error("Error sending message:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [
+      message,
+      activeChat,
+      isProduction,
+      isConnected,
+      sendMessage,
+      socketSendMessage,
+      currentUserId,
+      isTyping,
+      sendTyping,
+      fetchChats,
+    ],
+  )
+
+  const handleTyping = useCallback(
+    (value: string) => {
+      setMessage(value)
+
+      // Typing indicators only work in development with socket.io
+      if (isProduction || !socket || !activeChat || !currentUserId || !isConnected) return
+
+      // Send typing indicator
+      if (!isTyping && value.length > 0) {
+        setIsTyping(true)
+        sendTyping({
           chatRoomId: activeChat.id,
-          userId: session.user!.id,
-          isTyping: false,
+          userId: currentUserId,
+          isTyping: true,
         })
       }
-    }, 1000)
-  }
+
+      // Clear previous timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+
+      // Set timeout to stop typing indicator
+      typingTimeoutRef.current = setTimeout(() => {
+        if (isTyping) {
+          setIsTyping(false)
+          sendTyping({
+            chatRoomId: activeChat.id,
+            userId: currentUserId,
+            isTyping: false,
+          })
+        }
+      }, 1000)
+    },
+    [socket, activeChat, currentUserId, isConnected, isTyping, sendTyping, isProduction],
+  )
+
+  const handleRefresh = useCallback(() => {
+    fetchChats()
+  }, [fetchChats])
 
   if (!activeChat) {
     return (
@@ -144,8 +278,6 @@ export function ChatInterface() {
       </div>
     )
   }
-
-  const otherUser = activeChat.users.find((u) => u.user.id !== session?.user?.id)?.user
 
   return (
     <div className="flex flex-col h-[600px] border rounded-lg overflow-hidden">
@@ -162,12 +294,22 @@ export function ChatInterface() {
           </div>
         </div>
 
-        {/* Connection status */}
-        <div className="flex items-center">
-          {isConnected ? (
+        {/* Connection status and refresh button */}
+        <div className="flex items-center gap-2">
+          {isProduction ? (
+            <>
+              <Badge variant="secondary" className="text-blue-600">
+                <RefreshCw className="h-3 w-3 mr-1" />
+                Polling Mode
+              </Badge>
+              <Button variant="ghost" size="sm" onClick={handleRefresh}>
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </>
+          ) : isConnected ? (
             <Badge variant="secondary" className="text-green-600">
               <Wifi className="h-3 w-3 mr-1" />
-              Connected
+              Real-time
             </Badge>
           ) : (
             <Badge variant="destructive">
@@ -180,13 +322,13 @@ export function ChatInterface() {
 
       {/* Messages */}
       <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
-        {activeChat.messages.length === 0 ? (
+        {!activeChat.messages || activeChat.messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <p className="text-gray-500">No messages yet. Start the conversation!</p>
           </div>
         ) : (
           activeChat.messages.map((msg) => {
-            const isCurrentUser = msg.sender.id === session?.user?.id
+            const isCurrentUser = msg.sender.id === currentUserId
             return (
               <div key={msg.id} className={`flex mb-4 ${isCurrentUser ? "justify-end" : "justify-start"}`}>
                 {!isCurrentUser && (
@@ -210,8 +352,8 @@ export function ChatInterface() {
           })
         )}
 
-        {/* Typing indicator */}
-        {typingUsers.length > 0 && (
+        {/* Typing indicator (development only) */}
+        {!isProduction && typingUsers.length > 0 && (
           <div className="flex justify-start mb-4">
             <div className="bg-gray-200 rounded-lg px-3 py-2">
               <div className="flex space-x-1">
@@ -238,11 +380,17 @@ export function ChatInterface() {
           <Input
             value={message}
             onChange={(e) => handleTyping(e.target.value)}
-            placeholder="Type a message..."
+            placeholder={
+              isProduction
+                ? "Type a message... (updates every 3 seconds)"
+                : isConnected
+                  ? "Type a message..."
+                  : "Connecting..."
+            }
             className="flex-1 mr-2"
-            disabled={isLoading || !isConnected}
+            disabled={isLoading}
           />
-          <Button type="submit" size="icon" disabled={isLoading || !message.trim() || !isConnected}>
+          <Button type="submit" size="icon" disabled={isLoading || !message.trim()}>
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>

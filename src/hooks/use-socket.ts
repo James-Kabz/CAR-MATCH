@@ -3,12 +3,25 @@
 import { useEffect, useRef, useState } from "react"
 import { type Socket } from "socket.io-client"
 import io from "socket.io-client"
+
 export function useSocket() {
   const [isConnected, setIsConnected] = useState(false)
+  const [isProduction, setIsProduction] = useState(false)
   const socketRef = useRef<typeof Socket | null>(null)
 
   useEffect(() => {
-    // Initialize socket connection
+    // Check if we're in production
+    const isProd = process.env.NODE_ENV === "production" || window.location.hostname !== "localhost"
+    setIsProduction(isProd)
+
+    // In production, we'll skip socket.io and use polling instead
+    if (isProd) {
+      console.log("Production environment detected - using polling instead of WebSockets")
+      setIsConnected(false)
+      return
+    }
+
+    // Initialize socket connection only in development
     const initSocket = async () => {
       try {
         // First, ensure the socket server is running
@@ -30,7 +43,7 @@ export function useSocket() {
         })
 
         socket.on("connect", () => {
-          // console.log("Socket connected:", socket.id)
+          console.log("Socket connected:", socket.id)
           setIsConnected(true)
         })
 
@@ -65,7 +78,7 @@ export function useSocket() {
     // Cleanup on unmount
     return () => {
       if (socketRef.current) {
-        // console.log("Cleaning up socket connection")
+        console.log("Cleaning up socket connection")
         socketRef.current.disconnect()
         socketRef.current = null
         setIsConnected(false)
@@ -75,32 +88,33 @@ export function useSocket() {
 
   // Helper functions for socket operations
   const joinRoom = (roomId: string) => {
-    if (socketRef.current && isConnected) {
+    if (socketRef.current && isConnected && !isProduction) {
       socketRef.current.emit("join-chat", roomId)
     }
   }
 
   const leaveRoom = (roomId: string) => {
-    if (socketRef.current && isConnected) {
+    if (socketRef.current && isConnected && !isProduction) {
       socketRef.current.emit("leave-chat", roomId)
     }
   }
 
   const sendMessage = (data: any) => {
-    if (socketRef.current && isConnected) {
+    if (socketRef.current && isConnected && !isProduction) {
       socketRef.current.emit("send-message", data)
     }
   }
 
   const sendTyping = (data: any) => {
-    if (socketRef.current && isConnected) {
+    if (socketRef.current && isConnected && !isProduction) {
       socketRef.current.emit("typing", data)
     }
   }
 
   return {
     socket: socketRef.current,
-    isConnected,
+    isConnected: !isProduction && isConnected, // Always false in production
+    isProduction,
     joinRoom,
     leaveRoom,
     sendMessage,

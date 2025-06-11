@@ -7,6 +7,8 @@ import { Car, User, LogOut, MessageCircle, Heart } from "lucide-react"
 
 export function Navigation() {
   const { data: session } = useSession()
+  const isProduction =
+    typeof window !== "undefined" && (process.env.NODE_ENV === "production" || window.location.hostname !== "localhost")
 
   return (
     <nav className="bg-white shadow-sm border-b">
@@ -31,12 +33,18 @@ export function Navigation() {
                   <Button variant="ghost" size="sm">
                     <MessageCircle className="h-4 w-4 mr-2" />
                     Messages
+                    {isProduction && <span className="ml-1 text-xs text-blue-600">(Polling)</span>}
                   </Button>
                 </Link>
                 <Link href="/favorites">
                   <Button variant="ghost" size="sm">
                     <Heart className="h-4 w-4 mr-2" />
                     Favorites
+                  </Button>
+                </Link>
+                <Link href="/listings">
+                  <Button variant="ghost" size="sm">
+                    Browse Cars
                   </Button>
                 </Link>
                 <div className="flex items-center space-x-2">
@@ -50,12 +58,12 @@ export function Navigation() {
               </>
             ) : (
               <>
-                <Link href="/signin">
+                <Link href="/auth/signin">
                   <Button variant="ghost" size="sm">
                     Sign In
                   </Button>
                 </Link>
-                <Link href="/signup">
+                <Link href="/auth/signup">
                   <Button size="sm">Sign Up</Button>
                 </Link>
               </>
