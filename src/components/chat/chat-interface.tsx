@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { useChatStore } from "@/store/chat-store"
 import { useSocket } from "@/hooks/use-socket"
 import { notificationService } from "@/lib/notifications"
+import { addInAppNotification } from "@/components/in-app-notifications"
 
 export function ChatInterface() {
   const { data: session } = useSession()
@@ -83,7 +84,7 @@ export function ChatInterface() {
       // Join new room
       currentChatIdRef.current = activeChat.id
       joinRoom(activeChat.id)
-      setProcessedMessageIds(new Set())
+      // setProcessedMessageIds(new Set())
 
       return () => {
         if (currentChatIdRef.current) {
@@ -102,11 +103,22 @@ export function ChatInterface() {
       if (data.chatRoomId === activeChat?.id) {
         fetchChats()
 
-        // Show notification if the message is not from the current user
+        // Show notifications if the message is not from the current user
         if (data.senderId !== currentUserId && otherUser) {
+          // Browser notification
           notificationService.showMessageNotification(otherUser.name || "Someone", data.content, () => {
-            // Focus the window when notification is clicked
             window.focus()
+          })
+
+          // In-app notification
+          addInAppNotification({
+            type: "message",
+            title: `New message from ${otherUser.name}`,
+            message: data.content.length > 50 ? `${data.content.substring(0, 50)}...` : data.content,
+            onClick: () => {
+              // Already in chat, just focus
+              window.focus()
+            },
           })
         }
       }
@@ -193,6 +205,13 @@ export function ChatInterface() {
         // Send message to database
         await sendMessage(message)
 
+        // Show success notification
+        addInAppNotification({
+          type: "success",
+          title: "Message Sent",
+          message: `Your message was sent to ${otherUser?.name}`,
+        })
+
         // In development, emit via socket for real-time updates
         if (!isProduction && isConnected) {
           socketSendMessage({
@@ -220,6 +239,11 @@ export function ChatInterface() {
         }
       } catch (error) {
         console.error("Error sending message:", error)
+        addInAppNotification({
+          type: "error",
+          title: "Message Failed",
+          message: "Failed to send your message. Please try again.",
+        })
       } finally {
         setIsLoading(false)
       }
@@ -235,6 +259,7 @@ export function ChatInterface() {
       isTyping,
       sendTyping,
       fetchChats,
+      otherUser,
     ],
   )
 

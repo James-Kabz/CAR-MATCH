@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { ImageUpload } from "@/components/image-upload"
+import { addInAppNotification } from "@/components/in-app-notifications"
 
 interface Listing {
   id: string
@@ -85,6 +86,8 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
     setError("")
 
     try {
+      console.log("Sending update with images:", formData.images.length)
+
       const response = await fetch(`/api/listings/${listing.id}`, {
         method: "PUT",
         headers: {
@@ -95,6 +98,7 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
           year: Number.parseInt(formData.year),
           price: Number.parseInt(formData.price),
           mileage: formData.mileage ? Number.parseInt(formData.mileage) : null,
+          images: formData.images, // Make sure images are included
         }),
       })
 
@@ -103,15 +107,37 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
         throw new Error(data.error || "Failed to update listing")
       }
 
+      const result = await response.json()
+      console.log("Update successful:", result.listing.images.length, "images")
+
       // Success
+      addInAppNotification({
+        type: "success",
+        title: "Listing Updated",
+        message: "Your car listing has been updated successfully!",
+      })
+
       onClose()
       onUpdate?.()
       router.refresh()
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      console.error("Error updating listing:", error)
+      const errorMessage = error instanceof Error ? error.message : "An error occurred"
+      setError(errorMessage)
+
+      addInAppNotification({
+        type: "error",
+        title: "Update Failed",
+        message: errorMessage,
+      })
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleImagesChange = (images: string[]) => {
+    console.log("Images changed in edit modal:", images.length)
+    setFormData({ ...formData, images })
   }
 
   return (
@@ -258,11 +284,11 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
             />
           </div>
 
-          <ImageUpload
-            images={formData.images}
-            onImagesChange={(images) => setFormData({ ...formData, images })}
-            disabled={isLoading}
-          />
+          <div>
+            <Label>Images</Label>
+            <ImageUpload images={formData.images} onImagesChange={handleImagesChange} disabled={isLoading} />
+            <p className="text-xs text-gray-500 mt-1">Current images: {formData.images.length} / 5</p>
+          </div>
 
           <div className="flex items-center space-x-2">
             <Switch

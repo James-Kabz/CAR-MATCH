@@ -14,6 +14,10 @@ import { Plus, Car, DollarSign, MapPin, Calendar, MessageCircle } from "lucide-r
 import { EditListingModal } from "@/components/modals/edit-listing-modal"
 import { RespondInquiryModal } from "@/components/modals/respond-inquiry-modal"
 import { DeleteListingModal } from "@/components/modals/delete-listing-modal"
+import { ImageUpload } from "@/components/image-upload"
+import { NotificationPermission } from "@/components/notification-permission"
+import { notificationService } from "@/lib/notifications"
+import { addInAppNotification } from "@/components/in-app-notifications"
 
 interface Listing {
   id: string
@@ -49,6 +53,7 @@ export function SellerDashboard() {
     mileage: "",
     description: "",
     location: "",
+    images: [] as string[],
   })
 
   const [editModal, setEditModal] = useState<{
@@ -82,11 +87,26 @@ export function SellerDashboard() {
   })
 
   const [inquiries, setInquiries] = useState<any[]>([])
+  const [lastInquiryCount, setLastInquiryCount] = useState(0)
 
   useEffect(() => {
     fetchListings()
     fetchInquiries()
   }, [])
+
+  // Check for new inquiries and show notifications
+  useEffect(() => {
+    if (inquiries.length > lastInquiryCount && lastInquiryCount > 0) {
+      const newInquiries = inquiries.slice(0, inquiries.length - lastInquiryCount)
+      newInquiries.forEach((inquiry) => {
+        notificationService.showInquiryNotification(inquiry.buyer.name, inquiry.listing.title, () => {
+          setActiveTab("inquiries")
+          window.focus()
+        })
+      })
+    }
+    setLastInquiryCount(inquiries.length)
+  }, [inquiries.length, lastInquiryCount])
 
   const fetchListings = async () => {
     try {
@@ -102,7 +122,22 @@ export function SellerDashboard() {
     try {
       const response = await fetch("/api/inquiries")
       const data = await response.json()
-      setInquiries(data.inquiries || [])
+      const newInquiries = data.inquiries || []
+
+      // Check for new inquiries and show in-app notifications
+      if (inquiries.length > 0 && newInquiries.length > inquiries.length) {
+        const newInquiryCount = newInquiries.length - inquiries.length
+        addInAppNotification({
+          type: "inquiry",
+          title: "New Inquiry Received",
+          message: `You have ${newInquiryCount} new inquiry${newInquiryCount > 1 ? "ies" : ""} about your listings`,
+          onClick: () => {
+            setActiveTab("inquiries")
+          },
+        })
+      }
+
+      setInquiries(newInquiries)
     } catch (error) {
       console.error("Error fetching inquiries:", error)
     }
@@ -135,6 +170,13 @@ export function SellerDashboard() {
           mileage: "",
           description: "",
           location: "",
+          images: [],
+        })
+
+        addInAppNotification({
+          type: "success",
+          title: "Listing Created",
+          message: "Your car listing has been created successfully!",
         })
       }
     } catch (error) {
@@ -146,6 +188,8 @@ export function SellerDashboard() {
 
   return (
     <div className="space-y-6">
+      <NotificationPermission />
+
       {/* Tab Navigation */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
@@ -170,6 +214,11 @@ export function SellerDashboard() {
           >
             <MessageCircle className="h-4 w-4 inline mr-2" />
             Buyer Inquiries
+            {inquiries.filter((inq) => inq.status === "PENDING").length > 0 && (
+              <Badge variant="destructive" className="ml-2">
+                {inquiries.filter((inq) => inq.status === "PENDING").length}
+              </Badge>
+            )}
           </button>
         </nav>
       </div>
@@ -321,6 +370,12 @@ export function SellerDashboard() {
                     />
                   </div>
 
+                  <ImageUpload
+                    images={listingForm.images}
+                    onImagesChange={(images) => setListingForm({ ...listingForm, images })}
+                    disabled={isLoading}
+                  />
+
                   <div className="flex space-x-4">
                     <Button type="submit" disabled={isLoading}>
                       {isLoading ? "Creating..." : "Create Listing"}
@@ -349,11 +404,33 @@ export function SellerDashboard() {
                 <Card key={listing.id}>
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold">{listing.title}</h3>
-                        <p className="text-gray-600">
-                          {listing.year} {listing.brand} {listing.model}
-                        </p>
+                      <div className="flex space-x-4">
+                        {/* Image preview */}
+                        {listing.images.length > 0 ? (
+                          <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                            <img
+                              src={listing.images[0] || "/placeholder.svg"}
+                              alt={listing.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Car className="h-8 w-8 text-gray-400" />
+                          </div>
+                        )}
+
+                        <div>
+                          <h3 className="text-lg font-semibold">{listing.title}</h3>
+                          <p className="text-gray-600">
+                            {listing.year} {listing.brand} {listing.model}
+                          </p>
+                          {listing.images.length > 1 && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              +{listing.images.length - 1} more image{listing.images.length > 2 ? "s" : ""}
+                            </p>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Badge variant={listing.isActive ? "default" : "secondary"}>
