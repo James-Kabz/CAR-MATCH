@@ -12,7 +12,11 @@ export function useSocket() {
     const initSocket = async () => {
       try {
         // First, ensure the socket server is running
-        await fetch("/api/socket")
+        const response = await fetch("/api/socket")
+        if (!response.ok) {
+          console.warn("Socket server not available, skipping real-time features")
+          return
+        }
 
         // Create socket connection with proper configuration
         const socket = io({
@@ -22,6 +26,7 @@ export function useSocket() {
           reconnectionDelay: 1000,
           reconnectionAttempts: 5,
           timeout: 20000,
+          forceNew: true,
         })
 
         socket.on("connect", () => {

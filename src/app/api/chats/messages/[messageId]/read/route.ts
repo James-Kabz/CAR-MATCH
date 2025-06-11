@@ -50,6 +50,16 @@ export async function PUT(request: NextRequest ) {
     const updatedMessage = await prisma.chatMessage.update({
       where: { id : messageId },
       data: { isRead: true },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+      },
     })
 
     return NextResponse.json({ message: updatedMessage })
