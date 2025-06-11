@@ -63,12 +63,12 @@ export function Navigation() {
               </>
             ) : (
               <>
-                <Link href="/auth/signin">
+                <Link href="/signin">
                   <Button variant="ghost" size="sm">
                     Sign In
                   </Button>
                 </Link>
-                <Link href="/auth/signup">
+                <Link href="/signup">
                   <Button size="sm">Sign Up</Button>
                 </Link>
               </>

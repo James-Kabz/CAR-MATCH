@@ -314,7 +314,7 @@ export function BuyerDashboard() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div className="flex items-center text-sm text-gray-600">
-                      <DollarSign className="h-4 w-4 mr-1" />${match.listing.price.toLocaleString()}
+                      <DollarSign className="h-4 w-4 mr-1" />KES{match.listing.price.toLocaleString()}
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <MapPin className="h-4 w-4 mr-1" />
@@ -368,7 +368,7 @@ export function BuyerDashboard() {
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="text-lg font-semibold">
-                        ${request.minBudget.toLocaleString()} - ${request.maxBudget.toLocaleString()}
+                        KES {request.minBudget.toLocaleString()} - KES {request.maxBudget.toLocaleString()}
                       </h3>
                       <p className="text-gray-600">
                         {request.brand && `${request.brand} `}

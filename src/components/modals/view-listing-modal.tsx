@@ -191,7 +191,7 @@ export function ViewListingModal({ isOpen, onClose, listing, showContactButton =
             {/* Price and key details */}
             <div className="flex justify-between items-start">
               <div>
-                <div className="text-3xl font-bold text-green-600">${listing.price.toLocaleString()}</div>
+                <div className="text-3xl font-bold text-green-600">KES {listing.price.toLocaleString()}</div>
                 <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
                   <div className="flex items-center">
                     <MapPin className="h-4 w-4 mr-1" />

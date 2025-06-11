@@ -290,7 +290,7 @@ export function SellerDashboard() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="price">Price ($)</Label>
+                      <Label htmlFor="price">Price (KES)</Label>
                       <Input
                         id="price"
                         type="number"
@@ -442,7 +442,7 @@ export function SellerDashboard() {
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                       <div className="flex items-center text-sm text-gray-600">
-                        <DollarSign className="h-4 w-4 mr-1" />${listing.price.toLocaleString()}
+                        <DollarSign className="h-4 w-4 mr-1" />KES {listing.price.toLocaleString()}
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                         <MapPin className="h-4 w-4 mr-1" />

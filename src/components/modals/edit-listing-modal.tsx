@@ -196,7 +196,7 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="price">Price ($)</Label>
+              <Label htmlFor="price">Price (KES)</Label>
               <Input
                 id="price"
                 type="number"
