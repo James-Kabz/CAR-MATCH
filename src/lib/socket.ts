@@ -18,7 +18,7 @@ export const initSocketServer = (req: NextApiRequest, res: NextApiResponseWithSo
     const io = new SocketIOServer(res.socket.server, {
       path: "/api/socket",
       cors: {
-        origin: process.env.NODE_ENV === "production" ? process.env.NEXTAUTH_URL || false : ["https://car-match-7pgs.vercel.app"],
+        origin: process.env.NODE_ENV === "production" ? process.env.NEXTAUTH_URL || false : ["http://localhost:3000"],
         methods: ["GET", "POST"],
         credentials: true,
       },

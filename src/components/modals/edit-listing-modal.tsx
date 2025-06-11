@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { ImageUpload } from "@/components/image-upload"
+import { addInAppNotification } from "@/components/in-app-notifications"
 
 interface Listing {
   id: string
@@ -25,6 +27,7 @@ interface Listing {
   mileage?: number
   description?: string
   location: string
+  images: string[]
   isActive: boolean
 }
 
@@ -47,6 +50,7 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
     mileage: listing?.mileage?.toString() || "",
     description: listing?.description || "",
     location: listing?.location || "",
+    images: listing?.images || [],
     isActive: listing?.isActive || false,
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -66,6 +70,7 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
         mileage: listing.mileage?.toString() || "",
         description: listing.description || "",
         location: listing.location,
+        images: listing.images || [],
         isActive: listing.isActive,
       })
     }
@@ -81,6 +86,8 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
     setError("")
 
     try {
+      console.log("Sending update with images:", formData.images.length)
+
       const response = await fetch(`/api/listings/${listing.id}`, {
         method: "PUT",
         headers: {
@@ -91,6 +98,7 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
           year: Number.parseInt(formData.year),
           price: Number.parseInt(formData.price),
           mileage: formData.mileage ? Number.parseInt(formData.mileage) : null,
+          images: formData.images, // Make sure images are included
         }),
       })
 
@@ -99,20 +107,42 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
         throw new Error(data.error || "Failed to update listing")
       }
 
+      const result = await response.json()
+      console.log("Update successful:", result.listing.images.length, "images")
+
       // Success
+      addInAppNotification({
+        type: "success",
+        title: "Listing Updated",
+        message: "Your car listing has been updated successfully!",
+      })
+
       onClose()
       onUpdate?.()
       router.refresh()
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      console.error("Error updating listing:", error)
+      const errorMessage = error instanceof Error ? error.message : "An error occurred"
+      setError(errorMessage)
+
+      addInAppNotification({
+        type: "error",
+        title: "Update Failed",
+        message: errorMessage,
+      })
     } finally {
       setIsLoading(false)
     }
   }
 
+  const handleImagesChange = (images: string[]) => {
+    console.log("Images changed in edit modal:", images.length)
+    setFormData({ ...formData, images })
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Listing</DialogTitle>
           <DialogDescription>Update your car listing details</DialogDescription>
@@ -166,7 +196,7 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="price">Price ($)</Label>
+              <Label htmlFor="price">Price (KES)</Label>
               <Input
                 id="price"
                 type="number"
@@ -252,6 +282,12 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
               rows={4}
               disabled={isLoading}
             />
+          </div>
+
+          <div>
+            <Label>Images</Label>
+            <ImageUpload images={formData.images} onImagesChange={handleImagesChange} disabled={isLoading} />
+            <p className="text-xs text-gray-500 mt-1">Current images: {formData.images.length} / 5</p>
           </div>
 
           <div className="flex items-center space-x-2">

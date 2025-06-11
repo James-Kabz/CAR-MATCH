@@ -258,7 +258,19 @@ export default function ListingsPage() {
                 <CardContent className="p-0">
                   {/* Image placeholder */}
                   <div className="aspect-video bg-gray-200 flex items-center justify-center">
-                    <Car className="h-12 w-12 text-gray-400" />
+                    {listing.images.length > 0 ? (
+                      <div className="w-full h-full bg-gray-100 rounded-xsm overflow-hidden flex-shrink-0">
+                        <img
+                          src={listing.images[0] || "/placeholder.svg"}
+                          alt={listing.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Car className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-6">
@@ -274,7 +286,7 @@ export default function ListingsPage() {
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center text-sm text-gray-600">
-                          <DollarSign className="h-4 w-4 mr-1" />${listing.price.toLocaleString()}
+                          <DollarSign className="h-4 w-4 mr-1" />KES {listing.price.toLocaleString()}
                         </div>
                         <div className="flex items-center text-sm text-gray-600">
                           <Eye className="h-4 w-4 mr-1" />

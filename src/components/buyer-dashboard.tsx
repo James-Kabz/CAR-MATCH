@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Search, Car, MapPin, DollarSign, MessageCircle } from "lucide-react"
 import { ContactSellerModal } from "@/components/modals/contact-seller-modal"
+import { NotificationPermission } from "@/components/notification-permission"
 
 interface BuyerRequest {
   id: string
@@ -137,6 +138,8 @@ export function BuyerDashboard() {
 
   return (
     <div className="space-y-6">
+      <NotificationPermission />
+
       {/* Tab Navigation */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
@@ -283,18 +286,35 @@ export function BuyerDashboard() {
               <Card key={match.id}>
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">{match.listing.title}</h3>
-                      <p className="text-gray-600">
-                        {match.listing.year} {match.listing.brand} {match.listing.model}
-                      </p>
+                    <div className="flex space-x-4">
+                      {/* Image preview */}
+                      {match.listing.images.length > 0 ? (
+                        <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                          <img
+                            src={match.listing.images[0] || "/placeholder.svg"}
+                            alt={match.listing.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Car className="h-8 w-8 text-gray-400" />
+                        </div>
+                      )}
+
+                      <div>
+                        <h3 className="text-lg font-semibold">{match.listing.title}</h3>
+                        <p className="text-gray-600">
+                          {match.listing.year} {match.listing.brand} {match.listing.model}
+                        </p>
+                      </div>
                     </div>
                     <Badge variant="secondary">{Math.round(match.score * 100)}% match</Badge>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div className="flex items-center text-sm text-gray-600">
-                      <DollarSign className="h-4 w-4 mr-1" />${match.listing.price.toLocaleString()}
+                      <DollarSign className="h-4 w-4 mr-1" />KES{match.listing.price.toLocaleString()}
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <MapPin className="h-4 w-4 mr-1" />
@@ -348,7 +368,7 @@ export function BuyerDashboard() {
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h3 className="text-lg font-semibold">
-                        ${request.minBudget.toLocaleString()} - ${request.maxBudget.toLocaleString()}
+                        KES {request.minBudget.toLocaleString()} - KES {request.maxBudget.toLocaleString()}
                       </h3>
                       <p className="text-gray-600">
                         {request.brand && `${request.brand} `}

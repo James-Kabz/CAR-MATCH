@@ -141,7 +141,7 @@ export default function FavoritesPage() {
 
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center text-sm text-gray-600">
-                      <DollarSign className="h-4 w-4 mr-1" />${favorite.listing.price.toLocaleString()}
+                      <DollarSign className="h-4 w-4 mr-1" />KES{favorite.listing.price.toLocaleString()}
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <MapPin className="h-4 w-4 mr-1" />

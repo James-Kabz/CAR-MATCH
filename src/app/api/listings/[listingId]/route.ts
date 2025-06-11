@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
-export async function PUT(request: NextRequest) {
+export async function PUT(request: NextRequest ,{ params }: { params: Promise<{ listingId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -11,9 +11,8 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { pathname } = new URL(request.url);
-    const listingId = pathname.split("/").pop();
-    const { title, brand, model, year, price, condition, carType, mileage, description, location, isActive } =
+    const { listingId } = await params
+    const { title, brand, model, year, price, condition, carType, mileage, description, location, isActive, images } =
       await request.json()
 
     // Check if listing exists and belongs to user
@@ -44,6 +43,7 @@ export async function PUT(request: NextRequest) {
         description,
         location,
         isActive,
+        images: images || [],
       },
     })
 

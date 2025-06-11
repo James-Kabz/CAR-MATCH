@@ -5,13 +5,15 @@ import type React from "react"
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useSession } from "next-auth/react"
 import { format } from "date-fns"
-import { Send, Loader2, Wifi, WifiOff, RefreshCw } from "lucide-react"
+import { Send, Loader2, Wifi, WifiOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { useChatStore } from "@/store/chat-store"
 import { useSocket } from "@/hooks/use-socket"
+import { notificationService } from "@/lib/notifications"
+import { addInAppNotification } from "@/components/in-app-notifications"
 
 export function ChatInterface() {
   const { data: session } = useSession()
@@ -100,6 +102,25 @@ export function ChatInterface() {
       console.log("Received new message:", data)
       if (data.chatRoomId === activeChat?.id) {
         fetchChats()
+
+        // Show notifications if the message is not from the current user
+        if (data.senderId !== currentUserId && otherUser) {
+          // Browser notification
+          notificationService.showMessageNotification(otherUser.name || "Someone", data.content, () => {
+            window.focus()
+          })
+
+          // In-app notification
+          addInAppNotification({
+            type: "message",
+            title: `New message from ${otherUser.name}`,
+            message: data.content.length > 50 ? `${data.content.substring(0, 50)}...` : data.content,
+            onClick: () => {
+              // Already in chat, just focus
+              window.focus()
+            },
+          })
+        }
       }
     }
 
@@ -122,7 +143,7 @@ export function ChatInterface() {
       socket.off("new-message", handleNewMessage)
       socket.off("user-typing", handleUserTyping)
     }
-  }, [socket, isConnected, isProduction, activeChat?.id, currentUserId, fetchChats])
+  }, [socket, isConnected, isProduction, activeChat?.id, currentUserId, fetchChats, otherUser])
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -184,6 +205,13 @@ export function ChatInterface() {
         // Send message to database
         await sendMessage(message)
 
+        // Show success notification
+        addInAppNotification({
+          type: "success",
+          title: "Message Sent",
+          message: `Your message was sent to ${otherUser?.name}`,
+        })
+
         // In development, emit via socket for real-time updates
         if (!isProduction && isConnected) {
           socketSendMessage({
@@ -211,6 +239,11 @@ export function ChatInterface() {
         }
       } catch (error) {
         console.error("Error sending message:", error)
+        addInAppNotification({
+          type: "error",
+          title: "Message Failed",
+          message: "Failed to send your message. Please try again.",
+        })
       } finally {
         setIsLoading(false)
       }
@@ -226,6 +259,7 @@ export function ChatInterface() {
       isTyping,
       sendTyping,
       fetchChats,
+      otherUser,
     ],
   )
 
@@ -266,10 +300,6 @@ export function ChatInterface() {
     [socket, activeChat, currentUserId, isConnected, isTyping, sendTyping, isProduction],
   )
 
-  const handleRefresh = useCallback(() => {
-    fetchChats()
-  }, [fetchChats])
-
   if (!activeChat) {
     return (
       <div className="flex flex-col items-center justify-center h-[500px] bg-gray-50 rounded-lg">
@@ -294,18 +324,12 @@ export function ChatInterface() {
           </div>
         </div>
 
-        {/* Connection status and refresh button */}
-        <div className="flex items-center gap-2">
+        {/* Connection status */}
+        <div className="flex items-center">
           {isProduction ? (
-            <>
-              <Badge variant="secondary" className="text-blue-600">
-                <RefreshCw className="h-3 w-3 mr-1" />
-                Polling Mode
-              </Badge>
-              <Button variant="ghost" size="sm" onClick={handleRefresh}>
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-            </>
+            <Badge variant="secondary" className="text-blue-600">
+              Polling Mode
+            </Badge>
           ) : isConnected ? (
             <Badge variant="secondary" className="text-green-600">
               <Wifi className="h-3 w-3 mr-1" />
@@ -380,13 +404,7 @@ export function ChatInterface() {
           <Input
             value={message}
             onChange={(e) => handleTyping(e.target.value)}
-            placeholder={
-              isProduction
-                ? "Type a message... (updates every 3 seconds)"
-                : isConnected
-                  ? "Type a message..."
-                  : "Connecting..."
-            }
+            placeholder="Type a message..."
             className="flex-1 mr-2"
             disabled={isLoading}
           />

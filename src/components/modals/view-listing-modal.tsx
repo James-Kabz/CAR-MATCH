@@ -1,12 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import { MapPin, Car, Calendar, Eye, Heart, MessageCircle } from "lucide-react"
+import { MapPin, Car, Calendar, Eye, Heart, MessageCircle, ChevronLeft, ChevronRight } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ContactSellerModal } from "./contact-seller-modal"
+import { addInAppNotification } from "@/components/in-app-notifications"
 
 interface Listing {
   id: string
@@ -43,6 +44,7 @@ export function ViewListingModal({ isOpen, onClose, listing, showContactButton =
   const [contactModal, setContactModal] = useState(false)
   const [isFavorited, setIsFavorited] = useState(false)
   const [isAddingFavorite, setIsAddingFavorite] = useState(false)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   const handleAddToFavorites = async () => {
     setIsAddingFavorite(true)
@@ -57,12 +59,37 @@ export function ViewListingModal({ isOpen, onClose, listing, showContactButton =
 
       if (response.ok) {
         setIsFavorited(true)
+        addInAppNotification({
+          type: "success",
+          title: "Added to Favorites",
+          message: `${listing.title} has been added to your favorites`,
+        })
+      } else {
+        const data = await response.json()
+        addInAppNotification({
+          type: "error",
+          title: "Failed to Add Favorite",
+          message: data.error || "Could not add to favorites",
+        })
       }
     } catch (error) {
       console.error("Error adding to favorites:", error)
+      addInAppNotification({
+        type: "error",
+        title: "Error",
+        message: "An error occurred while adding to favorites",
+      })
     } finally {
       setIsAddingFavorite(false)
     }
+  }
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % listing.images.length)
+  }
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + listing.images.length) % listing.images.length)
   }
 
   return (
@@ -77,16 +104,94 @@ export function ViewListingModal({ isOpen, onClose, listing, showContactButton =
           </DialogHeader>
 
           <div className="space-y-6">
-            {/* Image placeholder */}
-            <div className="aspect-video bg-gray-200 rounded-lg flex items-center justify-center">
-              <Car className="h-16 w-16 text-gray-400" />
-              <span className="ml-2 text-gray-500">No images available</span>
+            {/* Image carousel */}
+            <div className="relative">
+              {listing.images.length > 0 ? (
+                <div className="relative aspect-video bg-gray-200 rounded-lg overflow-hidden">
+                  <img
+                    src={listing.images[currentImageIndex] || "/placeholder.svg"}
+                    alt={`${listing.title} - Image ${currentImageIndex + 1}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = "/placeholder.svg?height=400&width=600"
+                    }}
+                  />
+
+                  {listing.images.length > 1 && (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white"
+                        onClick={prevImage}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white"
+                        onClick={nextImage}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+
+                      {/* Image indicators */}
+                      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                        {listing.images.map((_, index) => (
+                          <button
+                            key={index}
+                            className={`w-2 h-2 rounded-full ${
+                              index === currentImageIndex ? "bg-white" : "bg-white bg-opacity-50"
+                            }`}
+                            onClick={() => setCurrentImageIndex(index)}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Image counter */}
+                      <div className="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-sm px-2 py-1 rounded">
+                        {currentImageIndex + 1} / {listing.images.length}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="aspect-video bg-gray-200 rounded-lg flex items-center justify-center">
+                  <Car className="h-16 w-16 text-gray-400" />
+                  <span className="ml-2 text-gray-500">No images available</span>
+                </div>
+              )}
+
+              {/* Thumbnail strip */}
+              {listing.images.length > 1 && (
+                <div className="flex space-x-2 mt-2 overflow-x-auto">
+                  {listing.images.map((image, index) => (
+                    <button
+                      key={index}
+                      className={`flex-shrink-0 w-16 h-16 rounded border-2 overflow-hidden ${
+                        index === currentImageIndex ? "border-blue-500" : "border-gray-300"
+                      }`}
+                      onClick={() => setCurrentImageIndex(index)}
+                    >
+                      <img
+                        src={image || "/placeholder.svg"}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "/placeholder.svg?height=64&width=64"
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Price and key details */}
             <div className="flex justify-between items-start">
               <div>
-                <div className="text-3xl font-bold text-green-600">${listing.price.toLocaleString()}</div>
+                <div className="text-3xl font-bold text-green-600">KES {listing.price.toLocaleString()}</div>
                 <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
                   <div className="flex items-center">
                     <MapPin className="h-4 w-4 mr-1" />

@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Car, User, LogOut, MessageCircle, Heart } from "lucide-react"
+import { InAppNotifications } from "@/components/in-app-notifications"
 
 export function Navigation() {
   const { data: session } = useSession()
@@ -47,6 +48,10 @@ export function Navigation() {
                     Browse Cars
                   </Button>
                 </Link>
+
+                {/* In-App Notifications */}
+                <InAppNotifications />
+
                 <div className="flex items-center space-x-2">
                   <User className="h-4 w-4" />
                   <span className="text-sm text-gray-700">{session.user?.name}</span>
