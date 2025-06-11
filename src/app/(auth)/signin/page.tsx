@@ -20,7 +20,7 @@ export default function SignInPage() {
   const [error, setError] = useState("")
   const router = useRouter()
   const searchParams = useSearchParams()
-  const message = searchParams.get("message")
+  const message = searchParams?.get("message")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { chatRoomId, content } = await request.json()
-    const senderId = session.user.id
+    const senderId = session.user?.id ?? '';
 
     // Verify user is part of the chat room
     const chatRoomUser = await prisma.chatRoomUser.findUnique({

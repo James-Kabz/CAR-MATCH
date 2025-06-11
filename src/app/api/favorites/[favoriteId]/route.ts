@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
-export async function DELETE(request: NextRequest, { params }: { params: { favoriteId: string } }) {
+export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -11,9 +11,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { favor
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { favoriteId } = params
     const userId = session.user.id
 
+    const { pathname } = new URL(request.url);
+    const favoriteId = pathname.split("/").pop();
     // Check if favorite exists and belongs to user
     const favorite = await prisma.favorite.findUnique({
       where: { id: favoriteId },

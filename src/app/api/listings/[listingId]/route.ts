@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
-export async function PUT(request: NextRequest, { params }: { params: { listingId: string } }) {
+export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -11,7 +11,8 @@ export async function PUT(request: NextRequest, { params }: { params: { listingI
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { listingId } = params
+    const { pathname } = new URL(request.url);
+    const listingId = pathname.split("/").pop();
     const { title, brand, model, year, price, condition, carType, mileage, description, location, isActive } =
       await request.json()
 
@@ -53,7 +54,7 @@ export async function PUT(request: NextRequest, { params }: { params: { listingI
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { listingId: string } }) {
+export async function DELETE(request: NextRequest ) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -61,7 +62,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { listi
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { listingId } = params
+    const { pathname } = new URL(request.url);
+    const listingId = pathname.split("/").pop();
 
     // Check if listing exists and belongs to user
     const existingListing = await prisma.listing.findUnique({

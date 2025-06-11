@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
-export async function PUT(request: NextRequest, { params }: { params: { messageId: string } }) {
+export async function PUT(request: NextRequest ) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -11,9 +11,14 @@ export async function PUT(request: NextRequest, { params }: { params: { messageI
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { messageId } = params
+    const { pathname } = new URL(request.url);
+    const messageId = pathname.split("/").pop();
+
     const userId = session.user.id
 
+    if (!messageId) {
+      return NextResponse.json({ error: "Invalid event ID" }, { status: 400 });
+    }
     // Get the message
     const message = await prisma.chatMessage.findUnique({
       where: { id: messageId },
@@ -43,7 +48,7 @@ export async function PUT(request: NextRequest, { params }: { params: { messageI
 
     // Mark message as read
     const updatedMessage = await prisma.chatMessage.update({
-      where: { id: messageId },
+      where: { id : messageId },
       data: { isRead: true },
     })
 

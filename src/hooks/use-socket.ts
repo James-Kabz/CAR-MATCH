@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { io, type Socket } from "socket.io-client"
-
+import { type Socket } from "socket.io-client"
+import io from "socket.io-client"
 export function useSocket() {
   const [isConnected, setIsConnected] = useState(false)
   const socketRef = useRef<typeof Socket | null>(null)
@@ -29,22 +29,22 @@ export function useSocket() {
           setIsConnected(true)
         })
 
-        socket.on("disconnect", (reason) => {
+        socket.on("disconnect", (reason: string) => {
           console.log("Socket disconnected:", reason)
           setIsConnected(false)
         })
 
-        socket.on("connect_error", (error) => {
+        socket.on("connect_error", (error: string) => {
           console.error("Socket connection error:", error)
           setIsConnected(false)
         })
 
-        socket.on("reconnect", (attemptNumber) => {
+        socket.on("reconnect", (attemptNumber: string) => {
           console.log("Socket reconnected after", attemptNumber, "attempts")
           setIsConnected(true)
         })
 
-        socket.on("reconnect_error", (error) => {
+        socket.on("reconnect_error", (error: string) => {
           console.error("Socket reconnection error:", error)
         })
 

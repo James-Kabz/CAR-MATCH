@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     const inquiry = await prisma.inquiry.create({
       data: {
         message,
-        buyerId,
+        buyerId: buyerId!,
         sellerId: listing.sellerId,
         listingId,
       },

@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { listingId } = await request.json()
-    const userId = session.user.id
+    const userId = session.user?.id ?? '';
 
     // Check if already favorited
     const existingFavorite = await prisma.favorite.findUnique({
