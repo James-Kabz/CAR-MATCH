@@ -29,23 +29,20 @@ export const initSocketServer = (req: NextApiRequest, res: NextApiResponseWithSo
     res.socket.server.io = io
 
     io.on("connection", (socket) => {
-      console.log("Socket connected:", socket.id)
+      // console.log("Socket connected:", socket.id)
 
       // Handle joining chat rooms
       socket.on("join-chat", (chatRoomId: string) => {
         socket.join(`chat:${chatRoomId}`)
-        console.log(`Socket ${socket.id} joined chat ${chatRoomId}`)
       })
 
       // Handle leaving chat rooms
       socket.on("leave-chat", (chatRoomId: string) => {
         socket.leave(`chat:${chatRoomId}`)
-        console.log(`Socket ${socket.id} left chat ${chatRoomId}`)
       })
 
       // Handle new messages
       socket.on("send-message", (data) => {
-        console.log("Broadcasting message to chat:", data.chatRoomId)
         // Broadcast to all users in the chat room
         io.to(`chat:${data.chatRoomId}`).emit("new-message", data)
       })

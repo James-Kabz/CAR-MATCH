@@ -28,12 +28,10 @@ export function ChatInterface() {
   useEffect(() => {
     if (!socket || !activeChat) return
 
-    console.log("Joining chat room:", activeChat.id)
     socket.emit("join-chat", activeChat.id)
 
     // Listen for new messages
     const handleNewMessage = (data: any) => {
-      console.log("Received new message:", data)
       fetchChats()
     }
 

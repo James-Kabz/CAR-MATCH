@@ -25,7 +25,7 @@ export function useSocket() {
         })
 
         socket.on("connect", () => {
-          console.log("Socket connected:", socket.id)
+          // console.log("Socket connected:", socket.id)
           setIsConnected(true)
         })
 
@@ -35,7 +35,7 @@ export function useSocket() {
         })
 
         socket.on("connect_error", (error: string) => {
-          console.error("Socket connection error:", error)
+          // console.error("Socket connection error:", error)
           setIsConnected(false)
         })
 
@@ -60,7 +60,7 @@ export function useSocket() {
     // Cleanup on unmount
     return () => {
       if (socketRef.current) {
-        console.log("Cleaning up socket connection")
+        // console.log("Cleaning up socket connection")
         socketRef.current.disconnect()
         socketRef.current = null
         setIsConnected(false)
