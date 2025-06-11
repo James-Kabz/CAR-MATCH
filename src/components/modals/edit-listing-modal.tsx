@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { ImageUpload } from "@/components/image-upload"
 
 interface Listing {
   id: string
@@ -25,6 +26,7 @@ interface Listing {
   mileage?: number
   description?: string
   location: string
+  images: string[]
   isActive: boolean
 }
 
@@ -47,6 +49,7 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
     mileage: listing?.mileage?.toString() || "",
     description: listing?.description || "",
     location: listing?.location || "",
+    images: listing?.images || [],
     isActive: listing?.isActive || false,
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -66,6 +69,7 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
         mileage: listing.mileage?.toString() || "",
         description: listing.description || "",
         location: listing.location,
+        images: listing.images || [],
         isActive: listing.isActive,
       })
     }
@@ -112,7 +116,7 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Listing</DialogTitle>
           <DialogDescription>Update your car listing details</DialogDescription>
@@ -253,6 +257,12 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
               disabled={isLoading}
             />
           </div>
+
+          <ImageUpload
+            images={formData.images}
+            onImagesChange={(images) => setFormData({ ...formData, images })}
+            disabled={isLoading}
+          />
 
           <div className="flex items-center space-x-2">
             <Switch
