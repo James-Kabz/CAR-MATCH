@@ -46,6 +46,15 @@ export async function GET(request: NextRequest) {
     const limit = Number.parseInt(searchParams.get("limit") || "10")
     const skip = (page - 1) * limit
 
+    // Filtering parameters
+    const search = searchParams.get("search") || ""
+    const brand = searchParams.get("brand") || ""
+    const carType = searchParams.get("carType") || ""
+    const condition = searchParams.get("condition") || ""
+    const minPrice = searchParams.get("minPrice")
+    const maxPrice = searchParams.get("maxPrice")
+    const location = searchParams.get("location") || ""
+
     // Handle the special case for current user
     if (sellerId === "?current" || sellerId === "current") {
       if (!session?.user?.id) {
@@ -54,10 +63,50 @@ export async function GET(request: NextRequest) {
       sellerId = session.user.id
     }
 
-    const where = sellerId ? { sellerId } : { isActive: true }
+    // Build where clause with filters
+    const where: any = sellerId ? { sellerId } : { isActive: true }
 
-    // Rest of your code remains the same...
+    // Case-insensitive search across title, brand, and model
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { brand: { contains: search, mode: "insensitive" } },
+        { model: { contains: search, mode: "insensitive" } },
+      ]
+    }
+
+    // Case-insensitive brand filter
+    if (brand && brand !== "all") {
+      where.brand = { equals: brand, mode: "insensitive" }
+    }
+
+    // Car type filter
+    if (carType && carType !== "all") {
+      where.carType = carType
+    }
+
+    // Condition filter
+    if (condition && condition !== "all") {
+      where.condition = condition
+    }
+
+    // Price range filters
+    if (minPrice) {
+      where.price = { ...where.price, gte: Number.parseInt(minPrice) }
+    }
+    if (maxPrice) {
+      where.price = { ...where.price, lte: Number.parseInt(maxPrice) }
+    }
+
+    // Case-insensitive location filter
+    if (location) {
+      where.location = { contains: location, mode: "insensitive" }
+    }
+
+    // Get total count for pagination
     const totalCount = await prisma.listing.count({ where })
+
+    // Get paginated listings
     const listings = await prisma.listing.findMany({
       where,
       include: {

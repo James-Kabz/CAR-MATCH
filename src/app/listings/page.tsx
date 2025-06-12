@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { Filter, Car, MapPin, DollarSign, Eye } from "lucide-react"
+import { Filter, Car, MapPin, Eye } from "lucide-react"
 import { Navigation } from "@/components/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -28,7 +28,6 @@ interface Listing {
   images: string[]
   views: number
   createdAt: string
-  isActive: boolean
   seller: {
     id: string
     name: string
@@ -48,7 +47,6 @@ interface PaginationData {
 export default function ListingsPage() {
   const { data: session } = useSession()
   const [listings, setListings] = useState<Listing[]>([])
-  const [filteredListings, setFilteredListings] = useState<Listing[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
   const [pagination, setPagination] = useState<PaginationData>({
@@ -68,19 +66,47 @@ export default function ListingsPage() {
     location: "",
   })
 
+  // Debounce filters to avoid too many API calls
+  const [debouncedFilters, setDebouncedFilters] = useState(filters)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilters(filters)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [filters])
+
+  useEffect(() => {
+    fetchListings(1) // Reset to page 1 when filters change
+  }, [debouncedFilters])
+
   useEffect(() => {
     fetchListings(pagination.page)
   }, [pagination.page])
 
-  useEffect(() => {
-    applyFilters()
-  }, [listings, filters])
-
   const fetchListings = async (page = 1) => {
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/listings?page=${page}&limit=${pagination.limit}`)
+
+      // Build query parameters
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pagination.limit.toString(),
+      })
+
+      // Add filters to query params
+      if (debouncedFilters.search) params.append("search", debouncedFilters.search)
+      if (debouncedFilters.brand !== "all") params.append("brand", debouncedFilters.brand)
+      if (debouncedFilters.carType !== "all") params.append("carType", debouncedFilters.carType)
+      if (debouncedFilters.condition !== "all") params.append("condition", debouncedFilters.condition)
+      if (debouncedFilters.minPrice) params.append("minPrice", debouncedFilters.minPrice)
+      if (debouncedFilters.maxPrice) params.append("maxPrice", debouncedFilters.maxPrice)
+      if (debouncedFilters.location) params.append("location", debouncedFilters.location)
+
+      const response = await fetch(`/api/listings?${params.toString()}`)
       const data = await response.json()
+
       setListings(data.listings || [])
       setPagination(
         data.pagination || {
@@ -97,46 +123,6 @@ export default function ListingsPage() {
     }
   }
 
-  const applyFilters = () => {
-    let filtered = listings.filter((listing) => listing.isActive)
-
-    if (filters.search) {
-      const searchLower = filters.search.toLowerCase()
-      filtered = filtered.filter(
-        (listing) =>
-          listing.title.toLowerCase().includes(searchLower) ||
-          listing.brand.toLowerCase().includes(searchLower) ||
-          listing.model.toLowerCase().includes(searchLower),
-      )
-    }
-
-    if (filters.brand !== "all") {
-      filtered = filtered.filter((listing) => listing.brand === filters.brand)
-    }
-
-    if (filters.carType !== "all") {
-      filtered = filtered.filter((listing) => listing.carType === filters.carType)
-    }
-
-    if (filters.condition !== "all") {
-      filtered = filtered.filter((listing) => listing.condition === filters.condition)
-    }
-
-    if (filters.minPrice) {
-      filtered = filtered.filter((listing) => listing.price >= Number.parseInt(filters.minPrice))
-    }
-
-    if (filters.maxPrice) {
-      filtered = filtered.filter((listing) => listing.price <= Number.parseInt(filters.maxPrice))
-    }
-
-    if (filters.location) {
-      filtered = filtered.filter((listing) => listing.location.toLowerCase().includes(filters.location.toLowerCase()))
-    }
-
-    setFilteredListings(filtered)
-  }
-
   const clearFilters = () => {
     setFilters({
       search: "",
@@ -151,6 +137,21 @@ export default function ListingsPage() {
 
   const handlePageChange = (page: number) => {
     setPagination((prev) => ({ ...prev, page }))
+  }
+
+  const handleViewListing = async (listing: Listing) => {
+    // Track the view
+    try {
+      await fetch(`/api/listings/${listing.id}/view`, {
+        method: "POST",
+      })
+      // Update the local listing view count
+      setListings((prev) => prev.map((l) => (l.id === listing.id ? { ...l, views: l.views + 1 } : l)))
+    } catch (error) {
+      console.error("Error tracking view:", error)
+    }
+
+    setSelectedListing(listing)
   }
 
   if (isLoading && pagination.page === 1) {
@@ -207,6 +208,9 @@ export default function ListingsPage() {
                   <SelectItem value="Audi">Audi</SelectItem>
                   <SelectItem value="Ford">Ford</SelectItem>
                   <SelectItem value="Chevrolet">Chevrolet</SelectItem>
+                  <SelectItem value="Nissan">Nissan</SelectItem>
+                  <SelectItem value="Mazda">Mazda</SelectItem>
+                  <SelectItem value="Subaru">Subaru</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -244,19 +248,19 @@ export default function ListingsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
               <Input
-                placeholder="Min Price"
+                placeholder="Min Price (KES)"
                 type="number"
                 value={filters.minPrice}
                 onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
               />
               <Input
-                placeholder="Max Price"
+                placeholder="Max Price (KES)"
                 type="number"
                 value={filters.maxPrice}
                 onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
               />
               <Input
-                placeholder="Location"
+                placeholder="Location (e.g., Nairobi, Mombasa)"
                 value={filters.location}
                 onChange={(e) => setFilters({ ...filters, location: e.target.value })}
               />
@@ -267,11 +271,12 @@ export default function ListingsPage() {
         {/* Results */}
         <div className="mb-4 flex justify-between items-center">
           <p className="text-gray-600">
-            {filteredListings.length} car{filteredListings.length !== 1 ? "s" : ""} found
+            {pagination.total} car{pagination.total !== 1 ? "s" : ""} found
           </p>
+          {isLoading && <div className="text-sm text-gray-500">Searching...</div>}
         </div>
 
-        {filteredListings.length === 0 ? (
+        {listings.length === 0 && !isLoading ? (
           <Card>
             <CardContent className="text-center py-12">
               <Car className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -281,11 +286,11 @@ export default function ListingsPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredListings.map((listing) => (
+            {listings.map((listing) => (
               <Card key={listing.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
                 <CardContent className="p-0">
                   {/* Image slider */}
-                  <div onClick={() => setSelectedListing(listing)}>
+                  <div onClick={() => handleViewListing(listing)}>
                     <ImageSlider images={listing.images} aspectRatio="video" showThumbnails={false} />
                   </div>
 
@@ -302,7 +307,9 @@ export default function ListingsPage() {
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center text-sm text-gray-600">
-                          <DollarSign className="h-4 w-4 mr-1" />${listing.price.toLocaleString()}
+                          <span className="text-lg font-semibold text-green-600">
+                            KES {listing.price.toLocaleString()}
+                          </span>
                         </div>
                         <div className="flex items-center text-sm text-gray-600">
                           <Eye className="h-4 w-4 mr-1" />
@@ -318,12 +325,12 @@ export default function ListingsPage() {
                       {listing.mileage && (
                         <div className="flex items-center text-sm text-gray-600">
                           <Car className="h-4 w-4 mr-1" />
-                          {listing.mileage.toLocaleString()} miles
+                          {listing.mileage.toLocaleString()} km
                         </div>
                       )}
                     </div>
 
-                    <Button className="w-full" onClick={() => setSelectedListing(listing)}>
+                    <Button className="w-full" onClick={() => handleViewListing(listing)}>
                       View Details
                     </Button>
                   </div>

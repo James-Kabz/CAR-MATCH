@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
@@ -15,6 +14,7 @@ interface RespondInquiryModalProps {
   inquiryId: string
   buyerName: string
   inquiryMessage: string
+  onRespond?: () => void
 }
 
 export function RespondInquiryModal({
@@ -23,6 +23,7 @@ export function RespondInquiryModal({
   inquiryId,
   buyerName,
   inquiryMessage,
+  onRespond,
 }: RespondInquiryModalProps) {
   const [response, setResponse] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -57,6 +58,7 @@ export function RespondInquiryModal({
       // Success
       onClose()
       setResponse("")
+      onRespond?.()
       router.push(`/chat?roomId=${chatRoomId}`)
     } catch (error) {
       setError(error instanceof Error ? error.message : "An error occurred")

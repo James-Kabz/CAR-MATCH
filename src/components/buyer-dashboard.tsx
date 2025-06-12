@@ -189,7 +189,7 @@ export function BuyerDashboard() {
             <form onSubmit={handleSearchSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="minBudget">Minimum Budget</Label>
+                  <Label htmlFor="minBudget">Minimum Budget (KES)</Label>
                   <Input
                     id="minBudget"
                     type="number"
@@ -200,7 +200,7 @@ export function BuyerDashboard() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="maxBudget">Maximum Budget</Label>
+                  <Label htmlFor="maxBudget">Maximum Budget (KES)</Label>
                   <Input
                     id="maxBudget"
                     type="number"
@@ -314,7 +314,8 @@ export function BuyerDashboard() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div className="flex items-center text-sm text-gray-600">
-                      <DollarSign className="h-4 w-4 mr-1" />KES{match.listing.price.toLocaleString()}
+                      <DollarSign className="h-4 w-4 mr-1" />
+                      KES {match.listing.price.toLocaleString()}
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
                       <MapPin className="h-4 w-4 mr-1" />
