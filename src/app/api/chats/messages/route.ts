@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { chatRoomId, content } = await request.json()
+    const { chatRoomId, content, listingId } = await request.json();
     const senderId = session.user?.id ?? '';
 
     // Verify user is part of the chat room
@@ -28,12 +28,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Not a member of this chat room" }, { status: 403 })
     }
 
-    // Create message
+    // Create message with optional listing reference
     const message = await prisma.chatMessage.create({
       data: {
         content,
         senderId,
         chatRoomId,
+        listingId: listingId || null,
       },
       include: {
         sender: {
@@ -42,6 +43,20 @@ export async function POST(request: NextRequest) {
             name: true,
             email: true,
             image: true,
+          },
+        },
+        listing: {
+          select: {
+            id: true,
+            title: true,
+            brand: true,
+            model: true,
+            year: true,
+            price: true,
+            location: true,
+            images: true,
+            condition: true,
+            carType: true,
           },
         },
       },

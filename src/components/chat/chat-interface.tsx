@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useSession } from "next-auth/react"
 import { format } from "date-fns"
-import { Send, Loader2, Wifi, WifiOff } from "lucide-react"
+import { Send, Loader2, Wifi, WifiOff, Car, DollarSign, MapPin, Info, Paperclip } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -14,6 +14,8 @@ import { useChatStore } from "@/store/chat-store"
 import { useSocket } from "@/hooks/use-socket"
 import { notificationService } from "@/lib/notifications"
 import { addInAppNotification } from "@/components/in-app-notifications"
+import { Card, CardContent } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export function ChatInterface() {
   const { data: session } = useSession()
@@ -33,6 +35,8 @@ export function ChatInterface() {
   const [typingUsers, setTypingUsers] = useState<string[]>([])
   const [processedMessageIds, setProcessedMessageIds] = useState<Set<string>>(new Set())
   const [lastMessageCount, setLastMessageCount] = useState(0)
+  const [selectedListingId, setSelectedListingId] = useState<string>("")
+  const [availableListings, setAvailableListings] = useState<any[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout>(null)
   const pollingIntervalRef = useRef<NodeJS.Timeout>(null)
@@ -54,6 +58,23 @@ export function ChatInterface() {
       fetchChats()
     }
   }, []) // Empty dependency array - only run once
+
+  // Fetch available listings for the current user
+  useEffect(() => {
+    const fetchListings = async () => {
+      if (!session?.user?.id) return
+
+      try {
+        const response = await fetch(`/api/listings?sellerId=current`)
+        const data = await response.json()
+        setAvailableListings(data.listings || [])
+      } catch (error) {
+        console.error("Error fetching listings:", error)
+      }
+    }
+
+    fetchListings()
+  }, [session?.user?.id])
 
   // Set up polling for production or real-time updates for development
   useEffect(() => {
@@ -202,8 +223,22 @@ export function ChatInterface() {
       setIsLoading(true)
 
       try {
-        // Send message to database
-        await sendMessage(message)
+        // Send message to database with optional listing reference
+        const messageData = {
+          chatRoomId: activeChat.id,
+          content: message,
+          listingId: selectedListingId || null,
+        }
+
+        const response = await fetch("/api/chats/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(messageData),
+        })
+
+        if (!response.ok) throw new Error("Failed to send message")
+
+        const { message: newMessage } = await response.json()
 
         // Show success notification
         addInAppNotification({
@@ -218,6 +253,7 @@ export function ChatInterface() {
             chatRoomId: activeChat.id,
             content: message,
             senderId: currentUserId,
+            listingId: selectedListingId || null,
           })
         } else {
           // In production, refresh the chat immediately
@@ -227,6 +263,7 @@ export function ChatInterface() {
         }
 
         setMessage("")
+        setSelectedListingId("")
 
         // Stop typing indicator (development only)
         if (!isProduction && isTyping) {
@@ -251,9 +288,9 @@ export function ChatInterface() {
     [
       message,
       activeChat,
+      selectedListingId,
       isProduction,
       isConnected,
-      sendMessage,
       socketSendMessage,
       currentUserId,
       isTyping,
@@ -353,6 +390,9 @@ export function ChatInterface() {
         ) : (
           activeChat.messages.map((msg) => {
             const isCurrentUser = msg.sender.id === currentUserId
+            // Check if message has listing data (after migration)
+            const hasListing = msg.listing && typeof msg.listing === "object"
+
             return (
               <div key={msg.id} className={`flex mb-4 ${isCurrentUser ? "justify-end" : "justify-start"}`}>
                 {!isCurrentUser && (
@@ -361,15 +401,75 @@ export function ChatInterface() {
                     <AvatarFallback>{msg.sender.name?.charAt(0) || "U"}</AvatarFallback>
                   </Avatar>
                 )}
-                <div
-                  className={`max-w-[70%] p-3 rounded-lg ${
-                    isCurrentUser ? "bg-blue-600 text-white" : "bg-white border"
-                  }`}
-                >
-                  <p className="text-sm">{msg.content}</p>
-                  <p className={`text-xs mt-1 ${isCurrentUser ? "text-blue-100" : "text-gray-500"}`}>
-                    {format(new Date(msg.createdAt), "p")}
-                  </p>
+                <div className={`max-w-[70%] ${isCurrentUser ? "items-end" : "items-start"} flex flex-col`}>
+                  {/* Car information card attached to message */}
+                  {hasListing && (
+                    <Card className={`mb-2 ${isCurrentUser ? "bg-blue-50" : "bg-white"} border`}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex-shrink-0">
+                            <div className="h-12 w-12 bg-gray-100 rounded-md overflow-hidden">
+                              {msg.listing?.images && msg.listing.images.length > 0 ? (
+                                <img
+                                  src={msg.listing?.images[0] || "/placeholder.svg"}
+                                  alt={msg.listing?.title}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <Car className="h-full w-full p-2 text-gray-400" />
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-xs font-medium text-gray-900 truncate">{msg.listing?.title}</h4>
+                            <div className="flex items-center text-xs text-gray-500 mt-1">
+                              <Car className="h-3 w-3 mr-1" />
+                              <span className="truncate">
+                                {msg.listing?.year} {msg.listing?.brand} {msg.listing?.model}
+                              </span>
+                            </div>
+                            <div className="flex items-center text-xs text-gray-500 mt-1">
+                              <DollarSign className="h-3 w-3 mr-1" />
+                              <span>KES {msg.listing?.price.toLocaleString()}</span>
+                              <MapPin className="h-3 w-3 ml-2 mr-1" />
+                              <span className="truncate">{msg.listing?.location}</span>
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs h-6 px-2"
+                            onClick={() => window.open(`/listings?id=${msg.listing?.id}`, "_blank")}
+                          >
+                            <Info className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Show listing ID if listing data not loaded yet */}
+                  {msg.listingId && !hasListing && (
+                    <Card className={`mb-2 ${isCurrentUser ? "bg-blue-50" : "bg-white"} border`}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center space-x-3">
+                          <Car className="h-8 w-8 text-gray-400" />
+                          <div className="flex-1">
+                            <p className="text-xs text-gray-500">Car information loading...</p>
+                            <p className="text-xs text-gray-400">ID: {msg.listingId}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Message bubble */}
+                  <div className={`p-3 rounded-lg ${isCurrentUser ? "bg-blue-600 text-white" : "bg-white border"}`}>
+                    <p className="text-sm">{msg.content}</p>
+                    <p className={`text-xs mt-1 ${isCurrentUser ? "text-blue-100" : "text-gray-500"}`}>
+                      {format(new Date(msg.createdAt), "p")}
+                    </p>
+                  </div>
                 </div>
               </div>
             )
@@ -400,6 +500,37 @@ export function ChatInterface() {
 
       {/* Message input */}
       <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
+        {/* Car selection dropdown */}
+        {availableListings.length > 0 && (
+          <div className="mb-3">
+            <Select value={selectedListingId || "none"} onValueChange={setSelectedListingId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Attach a car to this message (optional)">
+                  {selectedListingId && selectedListingId !== "none" ? (
+                    <div className="flex items-center">
+                      <Paperclip className="h-4 w-4 mr-2" />
+                      {availableListings.find((l) => l.id === selectedListingId)?.title}
+                    </div>
+                  ) : (
+                    <span className="text-gray-500">No car attached</span>
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No car attached</SelectItem>
+                {availableListings.map((listing) => (
+                  <SelectItem key={listing.id} value={listing.id}>
+                    <div className="flex items-center">
+                      <Car className="h-4 w-4 mr-2" />
+                      {listing.title} - KES {listing.price.toLocaleString()}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         <div className="flex items-center">
           <Input
             value={message}

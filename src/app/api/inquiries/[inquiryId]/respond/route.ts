@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 
-export async function POST( request: NextRequest,{ params }: { params: Promise<{ inquiryId: string }> }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ inquiryId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -18,6 +18,11 @@ export async function POST( request: NextRequest,{ params }: { params: Promise<{
     // Get the inquiry
     const inquiry = await prisma.inquiry.findUnique({
       where: { id: inquiryId },
+      include: {
+        listing: true,
+        buyer: true,
+        seller: true,
+      }
     })
 
     if (!inquiry) {
@@ -62,11 +67,36 @@ export async function POST( request: NextRequest,{ params }: { params: Promise<{
     }
 
     // Send the response as a message
-    await prisma.chatMessage.create({
+    const chatMessage = await prisma.chatMessage.create({
       data: {
         content: response,
         senderId: userId,
         chatRoomId: chatRoom.id,
+        listingId: inquiry.listingId
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+        listing: {
+          select: {
+            id: true,
+            title: true,
+            brand: true,
+            model: true,
+            year: true,
+            price: true,
+            location: true,
+            images: true,
+            condition: true,
+            carType: true,
+          },
+        },
       },
     })
 
@@ -96,6 +126,7 @@ export async function POST( request: NextRequest,{ params }: { params: Promise<{
     return NextResponse.json({
       inquiry: updatedInquiry,
       chatRoomId: chatRoom.id,
+      message: chatMessage,
     })
   } catch (error) {
     console.error("Error responding to inquiry:", error)
