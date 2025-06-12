@@ -84,6 +84,7 @@ model Listing {
   matches     Match[]
   inquiries   Inquiry[]
   favorites   Favorite[]
+  chatMessages ChatMessage[]
 }
 
 model BuyerRequest {
@@ -156,11 +157,13 @@ model ChatMessage {
   content   String
   createdAt DateTime @default(now())
   isRead    Boolean  @default(false)
+  listingId String?
   
   senderId  String
   sender    User     @relation("SentChatMessages", fields: [senderId], references: [id], onDelete: Cascade)
   chatRoomId String
   chatRoom  ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  listing   Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
 }
 
 model Inquiry {
