@@ -409,10 +409,10 @@ export function ChatInterface() {
                         <div className="flex items-center space-x-3">
                           <div className="flex-shrink-0">
                             <div className="h-12 w-12 bg-gray-100 rounded-md overflow-hidden">
-                              {msg.listing.images && msg.listing.images.length > 0 ? (
+                              {msg.listing?.images && msg.listing.images.length > 0 ? (
                                 <img
-                                  src={msg.listing.images[0] || "/placeholder.svg"}
-                                  alt={msg.listing.title}
+                                  src={msg.listing?.images[0] || "/placeholder.svg"}
+                                  alt={msg.listing?.title}
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
@@ -421,25 +421,25 @@ export function ChatInterface() {
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-xs font-medium text-gray-900 truncate">{msg.listing.title}</h4>
+                            <h4 className="text-xs font-medium text-gray-900 truncate">{msg.listing?.title}</h4>
                             <div className="flex items-center text-xs text-gray-500 mt-1">
                               <Car className="h-3 w-3 mr-1" />
                               <span className="truncate">
-                                {msg.listing.year} {msg.listing.brand} {msg.listing.model}
+                                {msg.listing?.year} {msg.listing?.brand} {msg.listing?.model}
                               </span>
                             </div>
                             <div className="flex items-center text-xs text-gray-500 mt-1">
                               <DollarSign className="h-3 w-3 mr-1" />
-                              <span>KES {msg.listing.price.toLocaleString()}</span>
+                              <span>KES {msg.listing?.price.toLocaleString()}</span>
                               <MapPin className="h-3 w-3 ml-2 mr-1" />
-                              <span className="truncate">{msg.listing.location}</span>
+                              <span className="truncate">{msg.listing?.location}</span>
                             </div>
                           </div>
                           <Button
                             variant="outline"
                             size="sm"
                             className="text-xs h-6 px-2"
-                            onClick={() => window.open(`/listings?id=${msg.listing.id}`, "_blank")}
+                            onClick={() => window.open(`/listings?id=${msg.listing?.id}`, "_blank")}
                           >
                             <Info className="h-3 w-3" />
                           </Button>

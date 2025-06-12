@@ -12,12 +12,13 @@ import { Textarea } from "@/components/ui/textarea"
 interface ContactSellerModalProps {
   isOpen: boolean
   onClose: () => void
+  sellerId: string
+  sellerName: string
   listingId: string
   listingTitle: string
-  sellerName: string
 }
 
-export function ContactSellerModal({ isOpen, onClose, listingId, listingTitle, sellerName }: ContactSellerModalProps) {
+export function ContactSellerModal({ isOpen, onClose, listingId, sellerId, listingTitle, sellerName }: ContactSellerModalProps) {
   const [message, setMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -37,12 +38,14 @@ export function ContactSellerModal({ isOpen, onClose, listingId, listingTitle, s
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          sellerId,
           listingId,
-          message,
+          message: `Inqury about "${listingTitle}": ${message}`,
         }),
       })
 
       if (!response.ok) {
+        
         const data = await response.json()
         throw new Error(data.error || "Failed to send inquiry")
       }

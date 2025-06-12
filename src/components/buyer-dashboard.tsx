@@ -39,6 +39,7 @@ interface Match {
     location: string
     images: string[]
     seller: {
+      id: string
       name: string
       phone?: string
     }
@@ -65,11 +66,13 @@ export function BuyerDashboard() {
     listingId: string
     listingTitle: string
     sellerName: string
+    sellerId: string
   }>({
     isOpen: false,
     listingId: "",
     listingTitle: "",
     sellerName: "",
+    sellerId: "",
   })
 
   useEffect(() => {
@@ -337,6 +340,7 @@ export function BuyerDashboard() {
                           listingId: match.listing.id,
                           listingTitle: match.listing.title,
                           sellerName: match.listing.seller.name,
+                          sellerId: match.listing.seller.id,
                         })
                       }
                     >
@@ -411,6 +415,7 @@ export function BuyerDashboard() {
         listingId={contactModal.listingId}
         listingTitle={contactModal.listingTitle}
         sellerName={contactModal.sellerName}
+        sellerId={contactModal.sellerId}
       />
     </div>
   )

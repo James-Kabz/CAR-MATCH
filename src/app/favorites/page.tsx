@@ -55,11 +55,13 @@ export default function FavoritesPage() {
     listingId: string
     listingTitle: string
     sellerName: string
+    sellerId: string
   }>({
     isOpen: false,
     listingId: "",
     listingTitle: "",
     sellerName: "",
+    sellerId: "",
   })
 
   useEffect(() => {
@@ -204,6 +206,7 @@ export default function FavoritesPage() {
                             listingId: favorite.listing.id,
                             listingTitle: favorite.listing.title,
                             sellerName: favorite.listing.seller.name,
+                            sellerId: favorite.listing.seller.id,
                           })
                         }
                       >
@@ -236,6 +239,7 @@ export default function FavoritesPage() {
         listingId={contactModal.listingId}
         listingTitle={contactModal.listingTitle}
         sellerName={contactModal.sellerName}
+        sellerId={contactModal.sellerId}
       />
     </div>
   )

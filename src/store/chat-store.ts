@@ -1,9 +1,36 @@
 import { create } from "zustand"
-import type { ChatMessage, ChatRoom, User } from "@prisma/client"
+import type { ChatMessage, ChatRoom, User, Listing, Condition, CarType } from "@prisma/client"
+
+// Type that matches exactly what your API returns
+type ListingData = {
+  id: string
+  title: string
+  brand: string
+  model: string
+  year: number
+  price: number
+  location: string
+  images: string[]
+  condition: Condition
+  carType: CarType
+}
+
+type UserData = {
+  id: string
+  name: string | null
+  email: string
+  image: string | null
+}
+
+// Updated type to include listing relation that matches your API response
+type ChatMessageWithRelations = ChatMessage & { 
+  sender: UserData
+  listing?: ListingData | null
+}
 
 type ChatRoomWithUsers = ChatRoom & {
   users: { user: User }[]
-  messages: (ChatMessage & { sender: User })[]
+  messages: ChatMessageWithRelations[]  // Updated to use the new type
 }
 
 interface ChatState {
@@ -17,8 +44,8 @@ interface ChatState {
   fetchChats: () => Promise<void>
   sendMessage: (content: string) => Promise<void>
   markAsRead: (messageId: string) => Promise<void>
-  addMessage: (message: ChatMessage & { sender: User }) => void
-  updateChatLastMessage: (chatRoomId: string, message: ChatMessage & { sender: User }) => void
+  addMessage: (message: ChatMessageWithRelations) => void  // Updated type
+  updateChatLastMessage: (chatRoomId: string, message: ChatMessageWithRelations) => void  // Updated type
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({

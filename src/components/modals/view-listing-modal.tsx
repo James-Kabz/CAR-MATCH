@@ -199,6 +199,7 @@ export function ViewListingModal({ isOpen, onClose, listing, showContactButton =
         listingId={listing.id}
         listingTitle={listing.title}
         sellerName={listing.seller.name}
+        sellerId={listing.seller.id}
       />
     </>
   )
