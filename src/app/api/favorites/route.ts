@@ -11,7 +11,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { searchParams } = new URL(request.url)
+    const page = Number.parseInt(searchParams.get("page") || "1")
+    const limit = Number.parseInt(searchParams.get("limit") || "10")
+    const skip = (page - 1) * limit
+
     const userId = session.user.id
+
+    // Get total count for pagination
+    const totalCount = await prisma.favorite.count({ where: { userId } })
 
     const favorites = await prisma.favorite.findMany({
       where: { userId },
@@ -31,9 +39,19 @@ export async function GET(request: NextRequest) {
       orderBy: {
         createdAt: "desc",
       },
+      skip,
+      take: limit,
     })
 
-    return NextResponse.json({ favorites })
+    return NextResponse.json({
+      favorites,
+      pagination: {
+        total: totalCount,
+        page,
+        limit,
+        totalPages: Math.ceil(totalCount / limit),
+      },
+    })
   } catch (error) {
     console.error("Error fetching favorites:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

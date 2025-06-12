@@ -18,6 +18,8 @@ import { ImageUpload } from "@/components/image-upload"
 import { NotificationPermission } from "@/components/notification-permission"
 import { notificationService } from "@/lib/notifications"
 import { addInAppNotification } from "@/components/in-app-notifications"
+import { Pagination } from "@/components/ui/pagination"
+import { ImageSlider } from "@/components/ui/image-slider"
 
 interface Listing {
   id: string
@@ -36,11 +38,30 @@ interface Listing {
   createdAt: string
 }
 
+interface PaginationData {
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
 export function SellerDashboard() {
   const [activeTab, setActiveTab] = useState("listings")
   const [listings, setListings] = useState<Listing[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [listingsPagination, setListingsPagination] = useState<PaginationData>({
+    total: 0,
+    page: 1,
+    limit: 5,
+    totalPages: 1,
+  })
+  const [inquiriesPagination, setInquiriesPagination] = useState<PaginationData>({
+    total: 0,
+    page: 1,
+    limit: 5,
+    totalPages: 1,
+  })
 
   const [listingForm, setListingForm] = useState({
     title: "",
@@ -90,9 +111,9 @@ export function SellerDashboard() {
   const [lastInquiryCount, setLastInquiryCount] = useState(0)
 
   useEffect(() => {
-    fetchListings()
-    fetchInquiries()
-  }, [])
+    fetchListings(listingsPagination.page)
+    fetchInquiries(inquiriesPagination.page)
+  }, [listingsPagination.page, inquiriesPagination.page])
 
   // Check for new inquiries and show notifications
   useEffect(() => {
@@ -108,21 +129,41 @@ export function SellerDashboard() {
     setLastInquiryCount(inquiries.length)
   }, [inquiries.length, lastInquiryCount])
 
-  const fetchListings = async () => {
+  const fetchListings = async (page = 1) => {
     try {
-      const response = await fetch("/api/listings")
+      setIsLoading(true)
+      const response = await fetch(`/api/listings?sellerId=?current&page=${page}&limit=${listingsPagination.limit}`)
       const data = await response.json()
       setListings(data.listings || [])
+      setListingsPagination(
+        data.pagination || {
+          total: data.listings?.length || 0,
+          page,
+          limit: listingsPagination.limit,
+          totalPages: Math.ceil((data.listings?.length || 0) / listingsPagination.limit),
+        },
+      )
     } catch (error) {
       console.error("Error fetching listings:", error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const fetchInquiries = async () => {
+  const fetchInquiries = async (page = 1) => {
     try {
-      const response = await fetch("/api/inquiries")
+      const response = await fetch(`/api/inquiries?page=${page}&limit=${inquiriesPagination.limit}`)
       const data = await response.json()
       const newInquiries = data.inquiries || []
+      setInquiries(newInquiries)
+      setInquiriesPagination(
+        data.pagination || {
+          total: data.inquiries?.length || 0,
+          page,
+          limit: inquiriesPagination.limit,
+          totalPages: Math.ceil((data.inquiries?.length || 0) / inquiriesPagination.limit),
+        },
+      )
 
       // Check for new inquiries and show in-app notifications
       if (inquiries.length > 0 && newInquiries.length > inquiries.length) {
@@ -136,8 +177,6 @@ export function SellerDashboard() {
           },
         })
       }
-
-      setInquiries(newInquiries)
     } catch (error) {
       console.error("Error fetching inquiries:", error)
     }
@@ -157,7 +196,7 @@ export function SellerDashboard() {
       })
 
       if (response.ok) {
-        await fetchListings()
+        await fetchListings(1) // Reset to first page after adding
         setShowAddForm(false)
         setListingForm({
           title: "",
@@ -186,6 +225,14 @@ export function SellerDashboard() {
     }
   }
 
+  const handleListingsPageChange = (page: number) => {
+    setListingsPagination((prev) => ({ ...prev, page }))
+  }
+
+  const handleInquiriesPageChange = (page: number) => {
+    setInquiriesPagination((prev) => ({ ...prev, page }))
+  }
+
   return (
     <div className="space-y-6">
       <NotificationPermission />
@@ -202,7 +249,7 @@ export function SellerDashboard() {
             }`}
           >
             <Car className="h-4 w-4 inline mr-2" />
-            My Listings ({listings.length})
+            My Listings ({listingsPagination.total})
           </button>
           <button
             onClick={() => setActiveTab("inquiries")}
@@ -290,7 +337,7 @@ export function SellerDashboard() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="price">Price (KES)</Label>
+                      <Label htmlFor="price">Price ($)</Label>
                       <Input
                         id="price"
                         type="number"
@@ -403,105 +450,103 @@ export function SellerDashboard() {
               listings.map((listing) => (
                 <Card key={listing.id}>
                   <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex space-x-4">
-                        {/* Image preview */}
-                        {listing.images.length > 0 ? (
-                          <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                            <img
-                              src={listing.images[0] || "/placeholder.svg"}
-                              alt={listing.title}
-                              className="w-full h-full object-cover"
-                            />
+                    <div className="flex flex-col md:flex-row gap-4">
+                      {/* Image slider */}
+                      <div className="w-full md:w-1/3">
+                        <ImageSlider images={listing.images} aspectRatio="square" showThumbnails={false} />
+                      </div>
+
+                      <div className="w-full md:w-2/3">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-lg font-semibold">{listing.title}</h3>
+                            <p className="text-gray-600">
+                              {listing.year} {listing.brand} {listing.model}
+                            </p>
                           </div>
-                        ) : (
-                          <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Car className="h-8 w-8 text-gray-400" />
+                          <div className="flex items-center space-x-2">
+                            <Badge variant={listing.isActive ? "default" : "secondary"}>
+                              {listing.isActive ? "Active" : "Inactive"}
+                            </Badge>
+                            <Badge variant="outline">{listing.condition}</Badge>
                           </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                          <div className="flex items-center text-sm text-gray-600">
+                            <DollarSign className="h-4 w-4 mr-1" />${listing.price.toLocaleString()}
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600">
+                            <MapPin className="h-4 w-4 mr-1" />
+                            {listing.location}
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Car className="h-4 w-4 mr-1" />
+                            {listing.carType}
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Calendar className="h-4 w-4 mr-1" />
+                            {new Date(listing.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+
+                        {listing.description && (
+                          <p className="text-gray-600 text-sm mb-4 line-clamp-2">{listing.description}</p>
                         )}
 
-                        <div>
-                          <h3 className="text-lg font-semibold">{listing.title}</h3>
-                          <p className="text-gray-600">
-                            {listing.year} {listing.brand} {listing.model}
-                          </p>
-                          {listing.images.length > 1 && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              +{listing.images.length - 1} more image{listing.images.length > 2 ? "s" : ""}
-                            </p>
-                          )}
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm text-gray-500">
+                            {listing.mileage && `${listing.mileage.toLocaleString()} miles`}
+                          </div>
+                          <div className="space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                setEditModal({
+                                  isOpen: true,
+                                  listing,
+                                })
+                              }
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600 hover:text-red-700"
+                              onClick={() =>
+                                setDeleteModal({
+                                  isOpen: true,
+                                  listingId: listing.id,
+                                  listingTitle: listing.title,
+                                })
+                              }
+                            >
+                              Delete
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <MessageCircle className="h-4 w-4 mr-2" />
+                              View Inquiries ({inquiries.filter((inq) => inq.listing.id === listing.id).length})
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant={listing.isActive ? "default" : "secondary"}>
-                          {listing.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                        <Badge variant="outline">{listing.condition}</Badge>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <DollarSign className="h-4 w-4 mr-1" />KES {listing.price.toLocaleString()}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        {listing.location}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Car className="h-4 w-4 mr-1" />
-                        {listing.carType}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="h-4 w-4 mr-1" />
-                        {new Date(listing.createdAt).toLocaleDateString()}
-                      </div>
-                    </div>
-
-                    {listing.description && (
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">{listing.description}</p>
-                    )}
-
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-gray-500">
-                        {listing.mileage && `${listing.mileage.toLocaleString()} miles`}
-                      </div>
-                      <div className="space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            setEditModal({
-                              isOpen: true,
-                              listing,
-                            })
-                          }
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 hover:text-red-700"
-                          onClick={() =>
-                            setDeleteModal({
-                              isOpen: true,
-                              listingId: listing.id,
-                              listingTitle: listing.title,
-                            })
-                          }
-                        >
-                          Delete
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <MessageCircle className="h-4 w-4 mr-2" />
-                          View Inquiries ({inquiries.filter((inq) => inq.listing.id === listing.id).length})
-                        </Button>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               ))
+            )}
+
+            {/* Pagination for listings */}
+            {listingsPagination.totalPages > 1 && (
+              <div className="mt-6">
+                <Pagination
+                  currentPage={listingsPagination.page}
+                  totalPages={listingsPagination.totalPages}
+                  onPageChange={handleListingsPageChange}
+                />
+              </div>
             )}
           </div>
         </div>
@@ -522,40 +567,53 @@ export function SellerDashboard() {
               </CardContent>
             </Card>
           ) : (
-            inquiries.map((inquiry) => (
-              <Card key={inquiry.id}>
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">{inquiry.listing.title}</h3>
-                      <p className="text-gray-600">From: {inquiry.buyer.name}</p>
+            <>
+              {inquiries.map((inquiry) => (
+                <Card key={inquiry.id}>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold">{inquiry.listing.title}</h3>
+                        <p className="text-gray-600">From: {inquiry.buyer.name}</p>
+                      </div>
+                      <Badge variant={inquiry.status === "PENDING" ? "destructive" : "default"}>{inquiry.status}</Badge>
                     </div>
-                    <Badge variant={inquiry.status === "PENDING" ? "destructive" : "default"}>{inquiry.status}</Badge>
-                  </div>
 
-                  <p className="text-gray-700 mb-4">{inquiry.message}</p>
+                    <p className="text-gray-700 mb-4">{inquiry.message}</p>
 
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">{new Date(inquiry.createdAt).toLocaleDateString()}</span>
-                    {inquiry.status === "PENDING" && (
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          setRespondModal({
-                            isOpen: true,
-                            inquiryId: inquiry.id,
-                            buyerName: inquiry.buyer.name,
-                            inquiryMessage: inquiry.message,
-                          })
-                        }
-                      >
-                        Respond
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-500">{new Date(inquiry.createdAt).toLocaleDateString()}</span>
+                      {inquiry.status === "PENDING" && (
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            setRespondModal({
+                              isOpen: true,
+                              inquiryId: inquiry.id,
+                              buyerName: inquiry.buyer.name,
+                              inquiryMessage: inquiry.message,
+                            })
+                          }
+                        >
+                          Respond
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {/* Pagination for inquiries */}
+              {inquiriesPagination.totalPages > 1 && (
+                <div className="mt-6">
+                  <Pagination
+                    currentPage={inquiriesPagination.page}
+                    totalPages={inquiriesPagination.totalPages}
+                    onPageChange={handleInquiriesPageChange}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

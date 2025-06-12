@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ContactSellerModal } from "@/components/modals/contact-seller-modal"
+import { Pagination } from "@/components/ui/pagination"
+import { ImageSlider } from "@/components/ui/image-slider"
 
 interface Favorite {
   id: string
@@ -22,6 +24,7 @@ interface Favorite {
     condition: string
     carType: string
     location: string
+    images: string[]
     seller: {
       id: string
       name: string
@@ -29,11 +32,24 @@ interface Favorite {
   }
 }
 
+interface PaginationData {
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
 export default function FavoritesPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [favorites, setFavorites] = useState<Favorite[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [pagination, setPagination] = useState<PaginationData>({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+  })
   const [contactModal, setContactModal] = useState<{
     isOpen: boolean
     listingId: string
@@ -48,21 +64,30 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/signin")
+      router.push("/auth/signin")
     }
   }, [status, router])
 
   useEffect(() => {
     if (session?.user) {
-      fetchFavorites()
+      fetchFavorites(pagination.page)
     }
-  }, [session])
+  }, [session, pagination.page])
 
-  const fetchFavorites = async () => {
+  const fetchFavorites = async (page = 1) => {
     try {
-      const response = await fetch("/api/favorites")
+      setIsLoading(true)
+      const response = await fetch(`/api/favorites?page=${page}&limit=${pagination.limit}`)
       const data = await response.json()
       setFavorites(data.favorites || [])
+      setPagination(
+        data.pagination || {
+          total: data.favorites?.length || 0,
+          page,
+          limit: pagination.limit,
+          totalPages: Math.ceil((data.favorites?.length || 0) / pagination.limit),
+        },
+      )
     } catch (error) {
       console.error("Error fetching favorites:", error)
     } finally {
@@ -78,10 +103,20 @@ export default function FavoritesPage() {
 
       if (response.ok) {
         setFavorites(favorites.filter((fav) => fav.id !== favoriteId))
+        // Update pagination if needed
+        if (favorites.length === 1 && pagination.page > 1) {
+          setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
+        } else {
+          fetchFavorites(pagination.page)
+        }
       }
     } catch (error) {
       console.error("Error removing favorite:", error)
     }
+  }
+
+  const handlePageChange = (page: number) => {
+    setPagination((prev) => ({ ...prev, page }))
   }
 
   if (status === "loading" || isLoading) {
@@ -121,58 +156,76 @@ export default function FavoritesPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {favorites.map((favorite) => (
               <Card key={favorite.id} className="overflow-hidden">
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">{favorite.listing.title}</h3>
-                      <p className="text-gray-600">
-                        {favorite.listing.year} {favorite.listing.brand} {favorite.listing.model}
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => removeFavorite(favorite.id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Heart className="h-4 w-4 fill-current" />
-                    </Button>
+                <CardContent className="p-0">
+                  {/* Image slider */}
+                  <div className="p-4 pb-0">
+                    <ImageSlider images={favorite.listing.images} aspectRatio="video" showThumbnails={false} />
                   </div>
 
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <DollarSign className="h-4 w-4 mr-1" />KES{favorite.listing.price.toLocaleString()}
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold">{favorite.listing.title}</h3>
+                        <p className="text-gray-600">
+                          {favorite.listing.year} {favorite.listing.brand} {favorite.listing.model}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => removeFavorite(favorite.id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Heart className="h-4 w-4 fill-current" />
+                      </Button>
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 mr-1" />
-                      {favorite.listing.location}
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Car className="h-4 w-4 mr-1" />
-                      {favorite.listing.carType}
-                    </div>
-                  </div>
 
-                  <div className="flex items-center justify-between">
-                    <Badge variant="outline">{favorite.listing.condition}</Badge>
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        setContactModal({
-                          isOpen: true,
-                          listingId: favorite.listing.id,
-                          listingTitle: favorite.listing.title,
-                          sellerName: favorite.listing.seller.name,
-                        })
-                      }
-                    >
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      Contact
-                    </Button>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <DollarSign className="h-4 w-4 mr-1" />${favorite.listing.price.toLocaleString()}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <MapPin className="h-4 w-4 mr-1" />
+                        {favorite.listing.location}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Car className="h-4 w-4 mr-1" />
+                        {favorite.listing.carType}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline">{favorite.listing.condition}</Badge>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          setContactModal({
+                            isOpen: true,
+                            listingId: favorite.listing.id,
+                            listingTitle: favorite.listing.title,
+                            sellerName: favorite.listing.seller.name,
+                          })
+                        }
+                      >
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Contact
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {pagination.totalPages > 1 && (
+          <div className="mt-8">
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={handlePageChange}
+            />
           </div>
         )}
       </div>

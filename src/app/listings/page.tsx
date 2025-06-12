@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { ViewListingModal } from "@/components/modals/view-listing-modal"
+import { Pagination } from "@/components/ui/pagination"
+import { ImageSlider } from "@/components/ui/image-slider"
 
 interface Listing {
   id: string
@@ -36,12 +38,25 @@ interface Listing {
   }
 }
 
+interface PaginationData {
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
 export default function ListingsPage() {
   const { data: session } = useSession()
   const [listings, setListings] = useState<Listing[]>([])
   const [filteredListings, setFilteredListings] = useState<Listing[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
+  const [pagination, setPagination] = useState<PaginationData>({
+    total: 0,
+    page: 1,
+    limit: 12,
+    totalPages: 1,
+  })
 
   const [filters, setFilters] = useState({
     search: "",
@@ -54,18 +69,27 @@ export default function ListingsPage() {
   })
 
   useEffect(() => {
-    fetchListings()
-  }, [])
+    fetchListings(pagination.page)
+  }, [pagination.page])
 
   useEffect(() => {
     applyFilters()
   }, [listings, filters])
 
-  const fetchListings = async () => {
+  const fetchListings = async (page = 1) => {
     try {
-      const response = await fetch("/api/listings")
+      setIsLoading(true)
+      const response = await fetch(`/api/listings?page=${page}&limit=${pagination.limit}`)
       const data = await response.json()
       setListings(data.listings || [])
+      setPagination(
+        data.pagination || {
+          total: data.listings?.length || 0,
+          page,
+          limit: pagination.limit,
+          totalPages: Math.ceil((data.listings?.length || 0) / pagination.limit),
+        },
+      )
     } catch (error) {
       console.error("Error fetching listings:", error)
     } finally {
@@ -125,7 +149,11 @@ export default function ListingsPage() {
     })
   }
 
-  if (isLoading) {
+  const handlePageChange = (page: number) => {
+    setPagination((prev) => ({ ...prev, page }))
+  }
+
+  if (isLoading && pagination.page === 1) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
@@ -256,21 +284,9 @@ export default function ListingsPage() {
             {filteredListings.map((listing) => (
               <Card key={listing.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
                 <CardContent className="p-0">
-                  {/* Image placeholder */}
-                  <div className="aspect-video bg-gray-200 flex items-center justify-center">
-                    {listing.images.length > 0 ? (
-                      <div className="w-full h-full bg-gray-100 rounded-xsm overflow-hidden flex-shrink-0">
-                        <img
-                          src={listing.images[0] || "/placeholder.svg"}
-                          alt={listing.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Car className="h-8 w-8 text-gray-400" />
-                      </div>
-                    )}
+                  {/* Image slider */}
+                  <div onClick={() => setSelectedListing(listing)}>
+                    <ImageSlider images={listing.images} aspectRatio="video" showThumbnails={false} />
                   </div>
 
                   <div className="p-6">
@@ -286,7 +302,7 @@ export default function ListingsPage() {
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center text-sm text-gray-600">
-                          <DollarSign className="h-4 w-4 mr-1" />KES {listing.price.toLocaleString()}
+                          <DollarSign className="h-4 w-4 mr-1" />${listing.price.toLocaleString()}
                         </div>
                         <div className="flex items-center text-sm text-gray-600">
                           <Eye className="h-4 w-4 mr-1" />
@@ -314,6 +330,17 @@ export default function ListingsPage() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {pagination.totalPages > 1 && (
+          <div className="mt-8">
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={handlePageChange}
+            />
           </div>
         )}
       </div>
