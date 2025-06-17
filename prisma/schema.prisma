@@ -38,12 +38,15 @@ model User {
   id            String    @id @default(cuid())
   name          String?
   email         String    @unique
-  emailVerified DateTime?
   password      String?   @db.Text
   image         String?
   role          UserRole  @default(BUYER)
   phone         String?
   location      String?
+  emailVerified DateTime?
+  emailVerificationToken String? @unique
+  passwordResetToken String? @unique
+  passwordResetExpires DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -60,6 +63,16 @@ model User {
   sentInquiries Inquiry[] @relation("SentInquiries")
   favorites     Favorite[]
 }
+
+model VerificationToken {
+  id         String   @id @default(cuid())
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
 
 model Listing {
   id          String      @id @default(cuid())

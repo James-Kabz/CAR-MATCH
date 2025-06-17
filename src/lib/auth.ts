@@ -22,10 +22,18 @@ export const authOptions: NextAuthOptions = {
           where: {
             email: credentials.email,
           },
+          // include: {
+          //   role: true,
+          // },
         })
 
         if (!user) {
           return null
+        }
+
+        if (!user.emailVerified)
+        {
+          throw new Error("Email not verified")
         }
 
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password || "")
@@ -65,4 +73,5 @@ export const authOptions: NextAuthOptions = {
     signIn: "/signin",
     newUser: "/signup",
   },
+  secret: process.env.NEXTAUTH_SECRET,
 }
