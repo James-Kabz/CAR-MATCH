@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge"
 import { Search, Car, MapPin, DollarSign, MessageCircle } from "lucide-react"
 import { ContactSellerModal } from "@/components/modals/contact-seller-modal"
 import { NotificationPermission } from "@/components/notification-permission"
+import { GlobalLoading, InlineLoading } from "@/components/ui/global-loading"
+import { toast } from "sonner"
 
 interface BuyerRequest {
   id: string
@@ -51,6 +53,9 @@ export function BuyerDashboard() {
   const [requests, setRequests] = useState<BuyerRequest[]>([])
   const [matches, setMatches] = useState<Match[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingRequests, setIsLoadingRequests] = useState(true)
+  const [isLoadingMatches, setIsLoadingMatches] = useState(true)
+  const [isSearching, setIsSearching] = useState(false)
 
   const [searchForm, setSearchForm] = useState({
     minBudget: "",
@@ -82,29 +87,44 @@ export function BuyerDashboard() {
 
   const fetchRequests = async () => {
     try {
+      setIsLoadingRequests(true)
       const response = await fetch("/api/buyer-requests")
       const data = await response.json()
       setRequests(data.requests || [])
+      // toast.success("Search history loaded successfully")
     } catch (error) {
       console.error("Error fetching requests:", error)
+      toast.error("Failed to load search history")
+    } finally {
+      setIsLoadingRequests(false)
     }
   }
 
   const fetchMatches = async () => {
     try {
+      setIsLoadingMatches(true)
       const response = await fetch("/api/matches")
       const data = await response.json()
       setMatches(data.matches || [])
+      if (data.matches?.length > 0) {
+        toast.success(`Found ${data.matches.length} car matches`)
+      }
     } catch (error) {
-      console.error("Error fetching matches:", error)
+      toast.error("Failed to load car matches")
+    } finally {
+      setIsLoadingMatches(false)
     }
   }
 
   const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
+    setIsSearching(true)
 
     try {
+      toast.info("Searching for cars...", {
+        description: "We're finding the best matches for you",
+      })
+
       // Create buyer request
       const requestResponse = await fetch("/api/buyer-requests", {
         method: "POST",
@@ -130,15 +150,43 @@ export function BuyerDashboard() {
           await fetchRequests()
           await fetchMatches()
           setActiveTab("matches")
+          toast.success("Search completed!", {
+            description: "Check your matches tab for results",
+          })
         }
       }
     } catch (error) {
-      console.error("Error creating search:", error)
+      toast.error("Search failed", {
+        description: "Please try again or contact support",
+      })
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  const handleRefreshMatches = async (requestId: string) => {
+    try {
+      setIsLoading(true)
+      toast.info("Refreshing matches...", {
+        description: "Looking for new cars that match your criteria",
+      })
+
+      const response = await fetch("/api/matches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId }),
+      })
+
+      if (response.ok) {
+        await fetchMatches()
+        toast.success("Matches refreshed successfully")
+      }
+    } catch (error) {
+      toast.error("Failed to refresh matches")
     } finally {
       setIsLoading(false)
     }
   }
-
   return (
     <div className="space-y-6">
       <NotificationPermission />
@@ -148,33 +196,30 @@ export function BuyerDashboard() {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab("search")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "search"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "search"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             <Search className="h-4 w-4 inline mr-2" />
             New Search
           </button>
           <button
             onClick={() => setActiveTab("matches")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "matches"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "matches"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             <Car className="h-4 w-4 inline mr-2" />
             Matches ({matches.length})
           </button>
           <button
             onClick={() => setActiveTab("requests")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "requests"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "requests"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             My Searches ({requests.length})
           </button>
@@ -196,7 +241,7 @@ export function BuyerDashboard() {
                   <Input
                     id="minBudget"
                     type="number"
-                    placeholder="10000"
+                    placeholder="500000"
                     value={searchForm.minBudget}
                     onChange={(e) => setSearchForm({ ...searchForm, minBudget: e.target.value })}
                     required
@@ -207,7 +252,7 @@ export function BuyerDashboard() {
                   <Input
                     id="maxBudget"
                     type="number"
-                    placeholder="50000"
+                    placeholder="2000000"
                     value={searchForm.maxBudget}
                     onChange={(e) => setSearchForm({ ...searchForm, maxBudget: e.target.value })}
                     required
@@ -220,7 +265,7 @@ export function BuyerDashboard() {
                   <Label htmlFor="brand">Preferred Brand</Label>
                   <Input
                     id="brand"
-                    placeholder="Toyota, Honda, etc."
+                    placeholder="Toyota, Nissan, Subaru, etc."
                     value={searchForm.brand}
                     onChange={(e) => setSearchForm({ ...searchForm, brand: e.target.value })}
                   />
@@ -229,7 +274,7 @@ export function BuyerDashboard() {
                   <Label htmlFor="model">Preferred Model</Label>
                   <Input
                     id="model"
-                    placeholder="Camry, Civic, etc."
+                    placeholder="Vitz, Note, Impreza, etc."
                     value={searchForm.model}
                     onChange={(e) => setSearchForm({ ...searchForm, model: e.target.value })}
                   />
@@ -258,15 +303,15 @@ export function BuyerDashboard() {
                 <Label htmlFor="location">Location</Label>
                 <Input
                   id="location"
-                  placeholder="City, State"
+                  placeholder="Nairobi, Mombasa, Kisumu, etc."
                   value={searchForm.location}
                   onChange={(e) => setSearchForm({ ...searchForm, location: e.target.value })}
                   required
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Searching..." : "Find Matches"}
+              <Button type="submit" className="w-full" disabled={isSearching}>
+                {isSearching ? <InlineLoading message="Searching for cars..." /> : "Find Matches"}
               </Button>
             </form>
           </CardContent>
@@ -276,7 +321,9 @@ export function BuyerDashboard() {
       {/* Matches Tab */}
       {activeTab === "matches" && (
         <div className="space-y-4">
-          {matches.length === 0 ? (
+          {isLoadingMatches ? (
+            <GlobalLoading message="Loading your car matches..." size="lg" />
+          ) : matches.length === 0 ? (
             <Card>
               <CardContent className="text-center py-8">
                 <Car className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -358,14 +405,15 @@ export function BuyerDashboard() {
       {/* Requests Tab */}
       {activeTab === "requests" && (
         <div className="space-y-4">
-          {requests.length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-8">
-                <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No searches yet</h3>
-                <p className="text-gray-600">Create your first search to get started</p>
-              </CardContent>
-            </Card>
+          {isLoadingRequests ? (
+            <GlobalLoading message="Loading your search history..." size="lg" />
+          ) : requests.length === 0 ? (<Card>
+            <CardContent className="text-center py-8">
+              <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No searches yet</h3>
+              <p className="text-gray-600">Create your first search to get started</p>
+            </CardContent>
+          </Card>
           ) : (
             requests.map((request) => (
               <Card key={request.id}>
@@ -392,16 +440,10 @@ export function BuyerDashboard() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => {
-                      // Trigger new match search for this request
-                      fetch("/api/matches", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ requestId: request.id }),
-                      }).then(() => fetchMatches())
-                    }}
+                    onClick={() => handleRefreshMatches(request.id)}
+                    disabled={isLoading}
                   >
-                    Refresh Matches
+                    {isLoading ? <InlineLoading message="Refreshing..." size="sm" /> : "Refresh Matches"}
                   </Button>
                 </CardContent>
               </Card>

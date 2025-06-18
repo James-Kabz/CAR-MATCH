@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge"
 import { ContactSellerModal } from "@/components/modals/contact-seller-modal"
 import { Pagination } from "@/components/ui/pagination"
 import { ImageSlider } from "@/components/ui/image-slider"
+import { GlobalLoading } from "@/components/ui/global-loading"
+import { toast } from "sonner"
 
 interface Favorite {
   id: string
@@ -109,11 +111,13 @@ export default function FavoritesPage() {
         if (favorites.length === 1 && pagination.page > 1) {
           setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
         } else {
+          toast.success("Favorite removed successfully")
           fetchFavorites(pagination.page)
         }
       }
     } catch (error) {
       console.error("Error removing favorite:", error)
+      toast.error("Failed to remove favorite")
     }
   }
 
@@ -123,11 +127,8 @@ export default function FavoritesPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="flex items-center justify-center py-20">
-          <div className="text-lg">Loading...</div>
-        </div>
+      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+        <GlobalLoading message="Loading your favorites..." size="lg" className="py-20" />
       </div>
     )
   }
@@ -138,7 +139,6 @@ export default function FavoritesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
 
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">

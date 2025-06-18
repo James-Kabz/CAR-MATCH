@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge"
 import { ViewListingModal } from "@/components/modals/view-listing-modal"
 import { Pagination } from "@/components/ui/pagination"
 import { ImageSlider } from "@/components/ui/image-slider"
+import { GlobalLoading } from "@/components/ui/global-loading"
+import { toast } from "sonner"
 
 interface Listing {
   id: string
@@ -118,6 +120,7 @@ export default function ListingsPage() {
       )
     } catch (error) {
       console.error("Error fetching listings:", error)
+      toast.error("Failed to load listings")
     } finally {
       setIsLoading(false)
     }
@@ -149,25 +152,22 @@ export default function ListingsPage() {
       setListings((prev) => prev.map((l) => (l.id === listing.id ? { ...l, views: l.views + 1 } : l)))
     } catch (error) {
       console.error("Error tracking view:", error)
+      toast.error("Failed to track view")
     }
 
     setSelectedListing(listing)
   }
 
   if (isLoading && pagination.page === 1) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="flex items-center justify-center py-20">
-          <div className="text-lg">Loading listings...</div>
-        </div>
-      </div>
-    )
-  }
+  return (
+    <div className="min-h-screen flex justify-center items-center bg-gray-50">
+      <GlobalLoading message="Loading..." size="lg" className="py-20" />
+    </div>
+  )
+}
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
 
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">

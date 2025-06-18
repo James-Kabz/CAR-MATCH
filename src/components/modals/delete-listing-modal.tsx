@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Loader2, AlertTriangle } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 
 interface DeleteListingModalProps {
   isOpen: boolean
@@ -28,7 +29,9 @@ export function DeleteListingModal({ isOpen, onClose, listingId, listingTitle, o
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || "Failed to delete listing")
+        toast.error(data.error || "Failed to delete listing")
+      } else {
+        toast.success("Listing deleted successfully")
       }
 
       // Success

@@ -6,6 +6,7 @@ import { useEffect } from "react"
 import { Navigation } from "@/components/navigation"
 import { ChatSidebar } from "@/components/chat/chat-sidebar"
 import { ChatInterface } from "@/components/chat/chat-interface"
+import { GlobalLoading } from "@/components/ui/global-loading"
 
 export default function ChatPage() {
   const { data: session, status } = useSession()
@@ -20,10 +21,7 @@ export default function ChatPage() {
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="flex items-center justify-center py-20">
-          <div className="text-lg">Loading...</div>
-        </div>
+        <GlobalLoading message="Loading your dashboard..." size="lg" className="py-20" />
       </div>
     )
   }
@@ -34,8 +32,6 @@ export default function ChatPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
-
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Messages</h1>

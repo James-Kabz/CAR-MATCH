@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,6 +19,8 @@ import { notificationService } from "@/lib/notifications"
 import { addInAppNotification } from "@/components/in-app-notifications"
 import { Pagination } from "@/components/ui/pagination"
 import { ImageSlider } from "@/components/ui/image-slider"
+import { GlobalLoading, InlineLoading } from "@/components/ui/global-loading"
+import { toast } from "sonner"
 
 interface Listing {
   id: string
@@ -49,7 +50,11 @@ export function SellerDashboard() {
   const [activeTab, setActiveTab] = useState("listings")
   const [listings, setListings] = useState<Listing[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingListings, setIsLoadingListings] = useState(true)
+  const [isLoadingInquiries, setIsLoadingInquiries] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [isCreatingListing, setIsCreatingListing] = useState(false)
+
   const [listingsPagination, setListingsPagination] = useState<PaginationData>({
     total: 0,
     page: 1,
@@ -131,8 +136,8 @@ export function SellerDashboard() {
 
   const fetchListings = async (page = 1) => {
     try {
-      setIsLoading(true)
-      const response = await fetch(`/api/listings?sellerId=?current&page=${page}&limit=${listingsPagination.limit}`)
+      setIsLoadingListings(true)
+      const response = await fetch(`/api/listings?sellerId=current&page=${page}&limit=${listingsPagination.limit}`)
       const data = await response.json()
       setListings(data.listings || [])
       setListingsPagination(
@@ -143,15 +148,18 @@ export function SellerDashboard() {
           totalPages: Math.ceil((data.listings?.length || 0) / listingsPagination.limit),
         },
       )
+      // toast.success("Listings loaded successfully")
     } catch (error) {
       console.error("Error fetching listings:", error)
+      toast.error("Failed to load listings")
     } finally {
-      setIsLoading(false)
+      setIsLoadingListings(false)
     }
   }
 
   const fetchInquiries = async (page = 1) => {
     try {
+      setIsLoadingInquiries(true)
       const response = await fetch(`/api/inquiries?page=${page}&limit=${inquiriesPagination.limit}`)
       const data = await response.json()
       const newInquiries = data.inquiries || []
@@ -176,17 +184,25 @@ export function SellerDashboard() {
             setActiveTab("inquiries")
           },
         })
+        toast.success(`${newInquiryCount} new inquiry${newInquiryCount > 1 ? "ies" : ""} received!`)
       }
     } catch (error) {
       console.error("Error fetching inquiries:", error)
+      toast.error("Failed to load inquiries")
+    } finally {
+      setIsLoadingInquiries(false)
     }
   }
 
   const handleListingSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
+    setIsCreatingListing(true)
 
     try {
+      toast.info("Creating your listing...", {
+        description: "Please wait while we process your car details",
+      })
+
       const response = await fetch("/api/listings", {
         method: "POST",
         headers: {
@@ -212,25 +228,38 @@ export function SellerDashboard() {
           images: [],
         })
 
+        toast.success("Listing created successfully!", {
+          description: "Your car is now visible to potential buyers",
+        })
+
         addInAppNotification({
           type: "success",
           title: "Listing Created",
           message: "Your car listing has been created successfully!",
         })
+      } else {
+        toast.error("Failed to create listing", {
+          description: "Please check your details and try again",
+        })
       }
     } catch (error) {
       console.error("Error creating listing:", error)
+      toast.error("Something went wrong", {
+        description: "Please try again or contact support",
+      })
     } finally {
-      setIsLoading(false)
+      setIsCreatingListing(false)
     }
   }
 
   const handleListingsPageChange = (page: number) => {
     setListingsPagination((prev) => ({ ...prev, page }))
+    toast.info(`Loading page ${page}...`)
   }
 
   const handleInquiriesPageChange = (page: number) => {
     setInquiriesPagination((prev) => ({ ...prev, page }))
+    toast.info(`Loading inquiries page ${page}...`)
   }
 
   return (
@@ -250,22 +279,6 @@ export function SellerDashboard() {
           >
             <Car className="h-4 w-4 inline mr-2" />
             My Listings ({listingsPagination.total})
-          </button>
-          <button
-            onClick={() => setActiveTab("inquiries")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "inquiries"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
-          >
-            <MessageCircle className="h-4 w-4 inline mr-2" />
-            Buyer Inquiries
-            {inquiries.filter((inq) => inq.status === "PENDING").length > 0 && (
-              <Badge variant="destructive" className="ml-2">
-                {inquiries.filter((inq) => inq.status === "PENDING").length}
-              </Badge>
-            )}
           </button>
         </nav>
       </div>
@@ -294,7 +307,7 @@ export function SellerDashboard() {
                     <Label htmlFor="title">Listing Title</Label>
                     <Input
                       id="title"
-                      placeholder="2020 Toyota Camry - Excellent Condition"
+                      placeholder="2020 Toyota Vitz - Excellent Condition"
                       value={listingForm.title}
                       onChange={(e) => setListingForm({ ...listingForm, title: e.target.value })}
                       required
@@ -316,7 +329,7 @@ export function SellerDashboard() {
                       <Label htmlFor="model">Model</Label>
                       <Input
                         id="model"
-                        placeholder="Camry"
+                        placeholder="Vitz"
                         value={listingForm.model}
                         onChange={(e) => setListingForm({ ...listingForm, model: e.target.value })}
                         required
@@ -337,22 +350,22 @@ export function SellerDashboard() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="price">Price ($)</Label>
+                      <Label htmlFor="price">Price (KES)</Label>
                       <Input
                         id="price"
                         type="number"
-                        placeholder="25000"
+                        placeholder="1200000"
                         value={listingForm.price}
                         onChange={(e) => setListingForm({ ...listingForm, price: e.target.value })}
                         required
                       />
                     </div>
                     <div>
-                      <Label htmlFor="mileage">Mileage</Label>
+                      <Label htmlFor="mileage">Mileage (KM)</Label>
                       <Input
                         id="mileage"
                         type="number"
-                        placeholder="50000"
+                        placeholder="80000"
                         value={listingForm.mileage}
                         onChange={(e) => setListingForm({ ...listingForm, mileage: e.target.value })}
                       />
@@ -399,7 +412,7 @@ export function SellerDashboard() {
                     <Label htmlFor="location">Location</Label>
                     <Input
                       id="location"
-                      placeholder="City, State"
+                      placeholder="Nairobi, Mombasa, Kisumu, etc."
                       value={listingForm.location}
                       onChange={(e) => setListingForm({ ...listingForm, location: e.target.value })}
                       required
@@ -420,12 +433,12 @@ export function SellerDashboard() {
                   <ImageUpload
                     images={listingForm.images}
                     onImagesChange={(images) => setListingForm({ ...listingForm, images })}
-                    disabled={isLoading}
+                    disabled={isCreatingListing}
                   />
 
                   <div className="flex space-x-4">
-                    <Button type="submit" disabled={isLoading}>
-                      {isLoading ? "Creating..." : "Create Listing"}
+                    <Button type="submit" disabled={isCreatingListing}>
+                      {isCreatingListing ? <InlineLoading message="Creating listing..." /> : "Create Listing"}
                     </Button>
                     <Button type="button" variant="outline" onClick={() => setShowAddForm(false)}>
                       Cancel
@@ -438,7 +451,9 @@ export function SellerDashboard() {
 
           {/* Listings Grid */}
           <div className="space-y-4">
-            {listings.length === 0 ? (
+            {isLoadingListings ? (
+              <GlobalLoading message="Loading your car listings..." size="lg" />
+            ) : listings.length === 0 ? (
               <Card>
                 <CardContent className="text-center py-8">
                   <Car className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -474,7 +489,8 @@ export function SellerDashboard() {
 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                           <div className="flex items-center text-sm text-gray-600">
-                            <DollarSign className="h-4 w-4 mr-1" />${listing.price.toLocaleString()}
+                            <DollarSign className="h-4 w-4 mr-1" />
+                            KES {listing.price.toLocaleString()}
                           </div>
                           <div className="flex items-center text-sm text-gray-600">
                             <MapPin className="h-4 w-4 mr-1" />
@@ -496,7 +512,7 @@ export function SellerDashboard() {
 
                         <div className="flex justify-between items-center">
                           <div className="text-sm text-gray-500">
-                            {listing.mileage && `${listing.mileage.toLocaleString()} miles`}
+                            {listing.mileage && `${listing.mileage.toLocaleString()} km`}
                           </div>
                           <div className="space-x-2">
                             <Button
@@ -553,10 +569,12 @@ export function SellerDashboard() {
       )}
 
       {/* Inquiries Tab */}
-      {activeTab === "inquiries" && (
+      {/* {activeTab === "inquiries" && (
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">Buyer Inquiries</h2>
-          {inquiries.length === 0 ? (
+          {isLoadingInquiries ? (
+            <GlobalLoading message="Loading buyer inquiries..." size="lg" />
+          ) : inquiries.length === 0 ? (
             <Card>
               <CardContent className="text-center py-8">
                 <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -604,7 +622,7 @@ export function SellerDashboard() {
               ))}
 
               {/* Pagination for inquiries */}
-              {inquiriesPagination.totalPages > 1 && (
+              {/* {inquiriesPagination.totalPages > 1 && (
                 <div className="mt-6">
                   <Pagination
                     currentPage={inquiriesPagination.page}
@@ -616,13 +634,13 @@ export function SellerDashboard() {
             </>
           )}
         </div>
-      )}
+      )}  */}
 
       <EditListingModal
         isOpen={editModal.isOpen}
         onClose={() => setEditModal({ isOpen: false, listing: null })}
         listing={editModal.listing!}
-        onUpdate={fetchListings}
+        onUpdate={() => fetchListings(listingsPagination.page)}
       />
 
       <RespondInquiryModal
@@ -638,7 +656,7 @@ export function SellerDashboard() {
         onClose={() => setDeleteModal({ isOpen: false, listingId: "", listingTitle: "" })}
         listingId={deleteModal.listingId}
         listingTitle={deleteModal.listingTitle}
-        onDelete={fetchListings}
+        onDelete={() => fetchListings()}
       />
     </div>
   )

@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { toast } from "sonner"
 
 interface ContactSellerModalProps {
   isOpen: boolean
@@ -47,7 +48,9 @@ export function ContactSellerModal({ isOpen, onClose, listingId, sellerId, listi
       if (!response.ok) {
         
         const data = await response.json()
-        throw new Error(data.error || "Failed to send inquiry")
+        toast.error(data.error || "Failed to send inquiry")
+      } else {
+        toast.success("Inquiry sent successfully")
       }
 
       // Success

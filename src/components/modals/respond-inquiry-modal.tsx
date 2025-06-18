@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { toast } from "sonner"
 
 interface RespondInquiryModalProps {
   isOpen: boolean
@@ -50,7 +51,9 @@ export function RespondInquiryModal({
 
       if (!apiResponse.ok) {
         const data = await apiResponse.json()
-        throw new Error(data.error || "Failed to send response")
+        toast.error(data.error || "Failed to send response")
+      } else {
+        toast.success("Response sent successfully")
       }
 
       const { chatRoomId } = await apiResponse.json()
@@ -62,6 +65,7 @@ export function RespondInquiryModal({
       router.push(`/chat?roomId=${chatRoomId}`)
     } catch (error) {
       setError(error instanceof Error ? error.message : "An error occurred")
+      toast.error("An error occured")
     } finally {
       setIsLoading(false)
     }

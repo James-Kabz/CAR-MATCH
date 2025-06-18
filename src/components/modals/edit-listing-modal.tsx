@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { ImageUpload } from "@/components/image-upload"
 import { addInAppNotification } from "@/components/in-app-notifications"
+import { toast } from "sonner"
+import { GlobalLoading } from "../ui/global-loading"
 
 interface Listing {
   id: string
@@ -102,20 +104,12 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
         }),
       })
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || "Failed to update listing")
+      const data = await response.json()
+      if (data.error) {
+        toast.error("Failed to update listing")
+      } else {
+        toast.success("Listing updated successfully")
       }
-
-      const result = await response.json()
-      console.log("Update successful:", result.listing.images.length, "images")
-
-      // Success
-      addInAppNotification({
-        type: "success",
-        title: "Listing Updated",
-        message: "Your car listing has been updated successfully!",
-      })
 
       onClose()
       onUpdate?.()
@@ -124,12 +118,7 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
       console.error("Error updating listing:", error)
       const errorMessage = error instanceof Error ? error.message : "An error occurred"
       setError(errorMessage)
-
-      addInAppNotification({
-        type: "error",
-        title: "Update Failed",
-        message: errorMessage,
-      })
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -139,6 +128,15 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
     console.log("Images changed in edit modal:", images.length)
     setFormData({ ...formData, images })
   }
+
+
+   if (status === "loading") {
+      return (
+        <div className="min-h-screen bg-gray-50">
+          <GlobalLoading message="Loading your listing..." size="lg" className="py-20" />
+        </div>
+      )
+    }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

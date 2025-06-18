@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Pagination } from "@/components/ui/pagination"
 import { RespondInquiryModal } from "@/components/modals/respond-inquiry-modal"
+import { GlobalLoading } from "@/components/ui/global-loading"
+import { toast } from "sonner"
 
 interface Enquiry {
   id: string
@@ -73,6 +75,7 @@ export default function EnquiriesPage() {
       )
     } catch (error) {
       console.error("Error fetching enquiries:", error)
+      toast.error("Failed to load enquiries")
     } finally {
       setIsLoading(false)
     }
@@ -97,18 +100,14 @@ export default function EnquiriesPage() {
 
   if (isLoading && pagination.page === 1) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="flex items-center justify-center py-20">
-          <div className="text-lg">Loading enquiries...</div>
-        </div>
+      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+        <GlobalLoading message="Loading your enquiries..." size="lg" className="py-20" />
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
 
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
@@ -231,7 +230,7 @@ export default function EnquiriesPage() {
           onClose={() => setSelectedEnquiry(null)}
           inquiryId={selectedEnquiry.id}
           buyerName={selectedEnquiry.buyer.name}
-        inquiryMessage={selectedEnquiry.message}
+          inquiryMessage={selectedEnquiry.message}
           onRespond={() => {
             setSelectedEnquiry(null)
             fetchEnquiries(pagination.page)

@@ -108,10 +108,10 @@ export default function ResetPasswordPage() {
           <CardContent className="text-center space-y-4">
             <p className="text-gray-600">Please request a new password reset link.</p>
             <div className="space-y-2">
-              <Link href="/auth/forgot-password">
+              <Link href="/forgot-password">
                 <Button className="w-full">Request New Reset Link</Button>
               </Link>
-              <Link href="/auth/signin">
+              <Link href="/signin">
                 <Button variant="outline" className="w-full">
                   Back to Sign In
                 </Button>
@@ -195,7 +195,7 @@ export default function ResetPasswordPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <Link href="/auth/signin" className="text-sm text-blue-600 hover:text-blue-500">
+            <Link href="/signin" className="text-sm text-blue-600 hover:text-blue-500">
               Back to Sign In
             </Link>
           </div>
