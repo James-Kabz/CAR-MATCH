@@ -8,10 +8,10 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Car } from "lucide-react"
-import { Navigation } from "@/components/navigation"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Car, Eye, EyeOff } from "lucide-react"
+import { toast } from "sonner"
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
@@ -22,14 +22,30 @@ export default function SignUpPage() {
     phone: "",
     location: "",
   })
+  const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError("")
+
+    // Validation
+    if (formData.password.length < 6) {
+      toast.error("Password too short", {
+        description: "Password must be at least 6 characters long.",
+      })
+      setIsLoading(false)
+      return
+    }
+
+    if (!formData.role) {
+      toast.error("Please select a role", {
+        description: "Choose whether you're a buyer or seller.",
+      })
+      setIsLoading(false)
+      return
+    }
 
     try {
       const response = await fetch("/api/auth/register", {
@@ -40,120 +56,146 @@ export default function SignUpPage() {
         body: JSON.stringify(formData),
       })
 
+      const data = await response.json()
+
       if (response.ok) {
-        router.push("/signin?message=Registration successful")
+        toast.success("Account created successfully!", {
+          description: "Please check your email to verify your account.",
+        })
+
+        // Redirect to sign in after a short delay
+        setTimeout(() => {
+          router.push("/signin")
+        }, 1000)
       } else {
-        const data = await response.json()
-        setError(data.error || "Registration failed")
+        toast.error("Registration failed", {
+          description: data.error || "Please try again.",
+        })
       }
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      console.error("Registration error:", error)
+      toast.error("Something went wrong", {
+        description: "Please try again later.",
+      })
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navigation />
-
-      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <Car className="h-12 w-12 text-blue-600" />
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+            <Car className="h-6 w-6 text-blue-600" />
+          </div>
+          <CardTitle className="text-2xl font-bold">Create Your Account</CardTitle>
+          <CardDescription>Join CarMatch to buy or sell cars</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
             </div>
-            <CardTitle className="text-2xl">Create Account</CardTitle>
-            <CardDescription>Join CarMatch to start buying or selling cars</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
 
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
+            <div>
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="john@example.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+              />
+            </div>
 
-              <div>
-                <Label htmlFor="password">Password</Label>
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
                 <Input
                   id="password"
-                  type="password"
-                  required
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Create a password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="role">I want to</Label>
-                <Select onValueChange={(value) => setFormData({ ...formData, role: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BUYER">Buy a car</SelectItem>
-                    <SelectItem value="SELLER">Sell a car</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  type="text"
                   required
-                  placeholder="City, State"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  minLength={6}
+                  className="pr-10"
                 />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-gray-400" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-gray-400" />
+                  )}
+                </button>
               </div>
-
-              {error && <div className="text-red-600 text-sm">{error}</div>}
-
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating Account..." : "Create Account"}
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                Already have an account?{" "}
-                <Link href="/signin" className="text-blue-600 hover:underline">
-                  Sign in
-                </Link>
-              </p>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+
+            <div>
+              <Label htmlFor="role">I want to</Label>
+              <Select onValueChange={(value) => setFormData({ ...formData, role: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="BUYER">Buy Cars</SelectItem>
+                  <SelectItem value="SELLER">Sell Cars</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+254 700 000 000"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="location"
+                type="text"
+                placeholder="Nairobi, Kenya"
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                required
+              />
+            </div>
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Creating Account..." : "Create Account"}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              Already have an account?{" "}
+              <Link href="/signin" className="text-blue-600 hover:text-blue-500 font-medium">
+                Sign in
+              </Link>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
