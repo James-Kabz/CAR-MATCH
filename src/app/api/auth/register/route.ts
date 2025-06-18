@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
 
     const emailVerificationToken = crypto.randomBytes(32).toString("hex")
-
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
         role,
         phone,
         location,
-        emailVerificationToken
+        emailVerificationToken,
+        emailVerificationTokenExpires: expires
       },
     })
 

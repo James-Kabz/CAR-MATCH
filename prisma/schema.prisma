@@ -45,6 +45,7 @@ model User {
   location      String?
   emailVerified DateTime?
   emailVerificationToken String? @unique
+  emailVerificationTokenExpires DateTime?
   passwordResetToken String? @unique
   passwordResetExpires DateTime?
   createdAt     DateTime  @default(now())
