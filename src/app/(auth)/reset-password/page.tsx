@@ -16,6 +16,8 @@ export default function ResetPasswordPage() {
     const [message, setMessage] = useState("")
     const [isSuccess, setIsSuccess] = useState(false)
     const [isValidToken, setIsValidToken] = useState(true)
+    const [tokenDetails, setTokenDetails] = useState<{ valid: boolean, expired?: boolean }>({ valid: false })
+
 
     const searchParams = useSearchParams()
     const token = searchParams?.get("token")
@@ -25,6 +27,33 @@ export default function ResetPasswordPage() {
         if (!token) {
             setIsValidToken(false)
         }
+
+        // verify token validity
+        const verifyToken = async () => {
+            try {
+                const response = await fetch('/api/auth/verify-reset-token', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ token }),
+                })
+
+                const data = await response.json()
+
+                if (response.ok) {
+                    setTokenDetails({ valid: true })
+                } else {
+                    setTokenDetails({ valid: false, expired: data.expired })
+                    setIsValidToken(false)
+                }
+            } catch (error) {
+                console.error("Error verifying token:", error)
+                setIsValidToken(false)
+            }
+        }
+
+        verifyToken()
     }, [token])
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -73,8 +102,14 @@ export default function ResetPasswordPage() {
                 <Card className="w-full max-w-md">
                     <CardHeader className="text-center">
                         <XCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
-                        <CardTitle className="text-2xl font-bold">Invalid Reset Link</CardTitle>
-                        <CardDescription>This password reset link is invalid or has expired.</CardDescription>
+                        <CardTitle className="text-2xl font-bold">
+                            {tokenDetails.expired ? "Expired Reset Link" : "Invalid Reset Link"}
+                        </CardTitle>
+                        <CardDescription>
+                            {tokenDetails.expired
+                                ? "This password reset link has expired."
+                                : "This password reset link is invalid."}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent className="text-center">
                         <Link href="/forgot-password">

@@ -11,7 +11,7 @@ export async function POST( request: NextRequest) {
             return NextResponse.json({ error: "Email is required" }, { status: 400 })
         }
 
-        const user = await prisma.user.findUnique({ where: { email } })
+        const user = await prisma.user.findUnique({ where: { email: email.toLowerCase()} })
 
         if (!user) {
             return NextResponse.json({
@@ -20,22 +20,22 @@ export async function POST( request: NextRequest) {
         }
 
         // password reset token
-        const passwordResetToken = crypto.randomBytes(32).toString('hex')
-        const passwordResetExpires = new Date(Date.now() + 3600) // 1 hour from now
+        const resetToken = crypto.randomBytes(32).toString('hex')
+        const resetExpires = new Date(Date.now() + 60 * 60 * 1000)
 
         // update user with reset token
         await prisma.user.update({
             where: { id: user.id},
             data: {
-                passwordResetToken,
-                passwordResetExpires
+                passwordResetToken: resetToken,
+                passwordResetExpires: resetExpires
             },
         })
 
         // send password reset email
 
         try {
-            await sendPasswordResetEmail(email, passwordResetToken)
+            await sendPasswordResetEmail(email, resetToken)
         }catch (error) {
             return NextResponse.json({ error: "Failed to send password reset email" }, { status: 500 })
         }
