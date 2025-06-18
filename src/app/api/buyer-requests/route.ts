@@ -11,23 +11,61 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { minBudget, maxBudget, brand, model, carType, location } = await request.json()
+    const { minBudget, maxBudget, brand, model, carType } = await request.json()
+
+    // Validate required fields
+    if (minBudget === undefined || maxBudget === undefined) {
+      return NextResponse.json(
+        { error: "Budget range is required" },
+        { status: 400 }
+      )
+    }
+
+    // Convert to numbers if they're strings
+    const minBudgetNum = typeof minBudget === 'string' ? parseInt(minBudget) : minBudget
+    const maxBudgetNum = typeof maxBudget === 'string' ? parseInt(maxBudget) : maxBudget
+
+    // Validate budget values
+    if (isNaN(minBudgetNum) || isNaN(maxBudgetNum)) {
+      return NextResponse.json(
+        { error: "Invalid budget values" },
+        { status: 400 }
+      )
+    }
+
+    if (minBudgetNum < 0 || maxBudgetNum < 0) {
+      return NextResponse.json(
+        { error: "Budget values cannot be negative" },
+        { status: 400 }
+      )
+    }
+
+    if (minBudgetNum > maxBudgetNum) {
+      return NextResponse.json(
+        { error: "Minimum budget cannot be greater than maximum budget" },
+        { status: 400 }
+      )
+    }
 
     const buyerRequest = await prisma.buyerRequest.create({
       data: {
-        minBudget: Number.parseInt(minBudget),
-        maxBudget: Number.parseInt(maxBudget),
-        brand,
-        model,
-        carType,
-        location,
+        minBudget: Number.parseInt(minBudgetNum),
+        maxBudget: Number.parseInt(maxBudgetNum),
+        brand: brand || null, // Store as null if empty string
+        model: model || null,
+        carType: carType || null,
         buyerId: session.user.id ?? "",
+        location: "",
       },
     })
 
     return NextResponse.json({ buyerRequest })
   } catch (error) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Error creating buyer request:", error)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }
 
@@ -50,6 +88,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ requests })
   } catch (error) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Error fetching buyer requests:", error)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }

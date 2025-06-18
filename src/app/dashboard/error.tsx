@@ -1,7 +1,8 @@
-'use client' // Error boundaries must be Client Components
- 
-import { useEffect } from 'react'
- 
+'use client'
+
+import { useEffect, useState } from "react"
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction } from "@/components/ui/alert-dialog"
+
 export default function Error({
   error,
   reset,
@@ -9,21 +10,32 @@ export default function Error({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const [open, setOpen] = useState(true)
+
   useEffect(() => {
-    // Log the error to an error reporting service
-    console.error(error)
+    console.error("Error boundary caught:", error)
   }, [error])
- 
+
+  const handleTryAgain = () => {
+    setOpen(false)
+    reset()
+  }
+
   return (
-    <div>
-      <h2>Something went wrong!</h2>
-      <button
-        onClick={
-          () => reset()
-        }
-      >
-        Try again
-      </button>
-    </div>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-red-600">Something went wrong</AlertDialogTitle>
+          <AlertDialogDescription>
+            An unexpected error occurred. You can try again or contact support if the issue persists.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction onClick={handleTryAgain}>
+            Try Again
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
