@@ -10,18 +10,29 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Car, Mail } from "lucide-react"
 import Link from "next/link"
+import { AuthErrorCodes, getAuthErrorMessage } from "@/lib/auth-errors"
+import { toast } from "sonner"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export default function SignInPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [resendSuccess, setResendSuccess] = useState("")
+  const [showResendDialog, setShowResendDialog] = useState(false)
   const router = useRouter()
 
   async function handleResend() {
     if (!email) {
-      setError("Please enter your email first")
+      toast.error("Please enter your email first")
       return
     }
 
@@ -37,13 +48,13 @@ export default function SignInPage() {
 
       const data = await res.json()
       if (data.error) {
-        setError(data.error)
+        toast.error(getAuthErrorMessage(data.error))
       } else {
-        setResendSuccess("Verification email sent successfully!")
-        setError("")
+        toast.success("Verification email sent successfully!")
+        setShowResendDialog(false)
       }
     } catch (error) {
-      setError("Failed to send verification email")
+      toast.error(getAuthErrorMessage(AuthErrorCodes.RESEND_FAILED))
     } finally {
       setIsLoading(false)
     }
@@ -52,8 +63,6 @@ export default function SignInPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setError("")
-    setResendSuccess("")
 
     try {
       const result = await signIn("credentials", {
@@ -63,14 +72,20 @@ export default function SignInPage() {
       })
 
       if (result?.error) {
-        setError(result.error)
+        const errorMessage = getAuthErrorMessage(result.error)
+        toast.error(errorMessage)
+        
+        // Show resend dialog if email not verified
+        if (result.error === AuthErrorCodes.EMAIL_NOT_VERIFIED) {
+          setShowResendDialog(true)
+        }
       } else {
         const session = await getSession()
         router.push("/dashboard")
         router.refresh()
       }
     } catch (error) {
-      setError("An error occurred during sign in")
+      toast.error(getAuthErrorMessage(AuthErrorCodes.UNKNOWN_ERROR))
     } finally {
       setIsLoading(false)
     }
@@ -120,30 +135,6 @@ export default function SignInPage() {
               </Link>
             </div>
 
-            {error && (
-              <div className="text-sm text-red-600 text-center bg-red-50 p-3 rounded-md">
-                {error}
-                {error.includes("not verified") && (
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="text-blue-600 p-0 ml-2 h-auto"
-                    onClick={handleResend}
-                    disabled={isLoading}
-                  >
-                    <Mail className="h-4 w-4 mr-1" />
-                    Resend verification
-                  </Button>
-                )}
-              </div>
-            )}
-
-            {resendSuccess && (
-              <div className="text-sm text-green-600 text-center bg-green-50 p-3 rounded-md">
-                {resendSuccess}
-              </div>
-            )}
-
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
@@ -157,6 +148,35 @@ export default function SignInPage() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Resend Verification Dialog */}
+      <AlertDialog open={showResendDialog} onOpenChange={setShowResendDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Email Not Verified</AlertDialogTitle>
+            <AlertDialogDescription>
+              Please verify your email before signing in. We can send you a new verification email.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleResend}
+              disabled={isLoading}
+              className="flex items-center gap-2"
+            >
+              {isLoading ? (
+                "Sending..."
+              ) : (
+                <>
+                  <Mail className="h-4 w-4" />
+                  Resend Verification
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
+import { AuthErrorCodes } from "./auth-errors"
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -15,7 +16,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null
+          throw new Error(AuthErrorCodes.INVALID_CREDENTIALS)
         }
 
         const user = await prisma.user.findUnique({
@@ -28,18 +29,18 @@ export const authOptions: NextAuthOptions = {
         })
 
         if (!user) {
-          return null
+          throw new Error(AuthErrorCodes.INVALID_CREDENTIALS)
         }
 
         if (!user.emailVerified)
         {
-          throw new Error("Please verify your email before signing in")
+          throw new Error(AuthErrorCodes.EMAIL_NOT_VERIFIED)
         }
 
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password || "")
 
         if (!isPasswordValid) {
-          return null
+          throw new Error(AuthErrorCodes.INVALID_CREDENTIALS)
         }
 
         return {

@@ -2,16 +2,21 @@ import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto"
 import { resendVerificationEmail } from "@/lib/email";
+import { AuthErrorCodes } from "@/lib/auth-errors";
 
-export async function POST( request: NextRequest ) {
+export async function POST(request: NextRequest) {
     try {
         const { email } = await request.json()
 
         if (!email) {
-            return NextResponse.json({ error: "Email is required" }, { status: 400 })
+            return NextResponse.json(
+                { error: AuthErrorCodes.INVALID_CREDENTIALS },
+                { status: 400 }
+            )
         }
 
-        const  user = await prisma.user.findUnique({ where: { email } })
+
+        const user = await prisma.user.findUnique({ where: { email } })
 
         if (!user) {
             return NextResponse.json({ error: "User not found" }, { status: 404 })
@@ -22,7 +27,7 @@ export async function POST( request: NextRequest ) {
         }
 
         const newToken = crypto.randomBytes(32).toString("hex")
-        const expires  = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
+        const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
         await prisma.user.update({
             where: {
                 id: user.id
@@ -38,6 +43,6 @@ export async function POST( request: NextRequest ) {
         return NextResponse.json({ message: "Verification email sent successfully" }, { status: 200 })
     } catch (error) {
         console.log(error)
-        return NextResponse.json({ error: "Something went wrong" }, { status: 500 })
+        return NextResponse.json({ error: AuthErrorCodes.UNKNOWN_ERROR }, { status: 500 })
     }
 }
