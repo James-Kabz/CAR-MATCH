@@ -6,7 +6,7 @@ import { useState, useRef } from "react"
 import { Upload, X, ImageIcon, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { addInAppNotification } from "@/components/in-app-notifications"
+import { toast } from "sonner"
 
 interface ImageUploadProps {
   images: string[]
@@ -22,16 +22,6 @@ export function ImageUpload({ images, onImagesChange, maxImages = 5, disabled = 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || [])
     if (files.length === 0) return
-
-    // Check if adding these files would exceed the limit
-    if (images.length + files.length > maxImages) {
-      addInAppNotification({
-        type: "error",
-        title: "Too Many Images",
-        message: `You can only upload up to ${maxImages} images`,
-      })
-      return
-    }
 
     setIsUploading(true)
 
@@ -62,18 +52,9 @@ export function ImageUpload({ images, onImagesChange, maxImages = 5, disabled = 
       const newImages = await Promise.all(uploadPromises)
       onImagesChange([...images, ...newImages])
 
-      addInAppNotification({
-        type: "success",
-        title: "Images Uploaded",
-        message: `Successfully uploaded ${newImages.length} image${newImages.length > 1 ? "s" : ""}`,
-      })
     } catch (error) {
       console.error("Error uploading images:", error)
-      addInAppNotification({
-        type: "error",
-        title: "Upload Failed",
-        message: error instanceof Error ? error.message : "Failed to upload images",
-      })
+      toast.error("Failed to upload images")
     } finally {
       setIsUploading(false)
       // Reset the input
@@ -86,12 +67,6 @@ export function ImageUpload({ images, onImagesChange, maxImages = 5, disabled = 
   const removeImage = (index: number) => {
     const newImages = images.filter((_, i) => i !== index)
     onImagesChange(newImages)
-
-    addInAppNotification({
-      type: "success",
-      title: "Image Removed",
-      message: "Image has been removed from your listing",
-    })
   }
 
   const triggerFileSelect = () => {

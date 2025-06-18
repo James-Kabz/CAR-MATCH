@@ -10,6 +10,7 @@ declare module "next-auth" {
     user?: {
       id?: string
       role?: string
+      lastMessageReadAt?: Date
     } & DefaultSession["user"]
   }
 }

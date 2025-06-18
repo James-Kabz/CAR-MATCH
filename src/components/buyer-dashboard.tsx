@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Search, Car, DollarSign, MessageCircle, ChevronDown } from "lucide-react"
 import { ContactSellerModal } from "@/components/modals/contact-seller-modal"
-import { NotificationPermission } from "@/components/notification-permission"
 import { GlobalLoading, InlineLoading } from "@/components/ui/global-loading"
 import { toast } from "sonner"
 
@@ -240,7 +239,6 @@ export function BuyerDashboard() {
 
   return (
     <div className="space-y-6">
-      <NotificationPermission />
 
       {/* Tab Navigation */}
       <div className="border-b border-gray-200">

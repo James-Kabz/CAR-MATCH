@@ -8,7 +8,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Car, User, LogOut, MessageCircle, Heart, Settings, Home } from "lucide-react"
-import { InAppNotifications } from "@/components/in-app-notifications"
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +23,8 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
 
@@ -49,32 +51,8 @@ export function Navigation() {
   const { data: session } = useSession()
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [messageCount, setMessageCount] = useState(0)
-  const [enquiryCount, setEnquiryCount] = useState(0)
   const isProduction =
     typeof window !== "undefined" && (process.env.NODE_ENV === "production" || window.location.hostname !== "localhost")
-
-  useEffect(() => {
-    if (!session) return
-
-    const interval = setInterval(async () => {
-      try {
-        const messagesRes = await fetch('/api/messages/unread-count')
-        const messagesData = await messagesRes.json()
-        setMessageCount(messagesData.count)
-
-        if (session.user?.role === 'SELLER') {
-          const enquiriesRes = await fetch('/api/enquiries/unread-count')
-          const enquiriesData = await enquiriesRes.json()
-          setEnquiryCount(enquiriesData.count)
-        }
-      } catch (error) {
-        console.error('Error polling notification counts:', error)
-      }
-    }, 30000) // Poll every 30 seconds
-
-    return () => clearInterval(interval)
-  }, [session])
 
   const isActive = (href: string) => {
     return pathname === href || (href !== "/" && pathname?.startsWith(href))
@@ -101,6 +79,10 @@ export function Navigation() {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-80">
+                  <SheetHeader>
+                    <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                  </SheetHeader>
+
                   <div className="flex flex-col h-full">
                     {/* Mobile menu content */}
                     <div className="space-y-1 px-2 pb-3 pt-6">
@@ -177,11 +159,6 @@ export function Navigation() {
                             <div className="text-base font-medium text-gray-800">{session.user?.name}</div>
                             <div className="text-sm font-medium text-gray-500">{session.user?.email}</div>
                           </div>
-                          <InAppNotifications
-                            mobile={true}
-                            initialUnreadMessages={messageCount}
-                            initialUnreadEnquiries={enquiryCount}
-                          />
                         </div>
                         <div className="mt-3 space-y-1 px-2 sm:px-3">
                           <Link
@@ -316,12 +293,6 @@ export function Navigation() {
                   </span>
                 </div>
 
-                <InAppNotifications
-                  initialUnreadMessages={messageCount}
-                  initialUnreadEnquiries={enquiryCount}
-                />
-
-
                 {/* Profile dropdown */}
                 <Menu as="div" className="relative ml-3">
                   <div>
@@ -330,7 +301,7 @@ export function Navigation() {
                       <span className="sr-only">Open user menu</span>
                       <img
                         className="h-8 w-8 rounded-full"
-                        src={session.user?.image || "https://images.unsplash.com/photo-1472099173936-5203891eb81f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"}
+                        src={session.user?.image || "https://files.softicons.com/download/internet-icons/user-icons-by-2shi/ico/user4.ico"}
                         alt=""
                       />
                     </Menu.Button>

@@ -14,13 +14,11 @@ import { EditListingModal } from "@/components/modals/edit-listing-modal"
 import { RespondInquiryModal } from "@/components/modals/respond-inquiry-modal"
 import { DeleteListingModal } from "@/components/modals/delete-listing-modal"
 import { ImageUpload } from "@/components/image-upload"
-import { NotificationPermission } from "@/components/notification-permission"
-import { notificationService } from "@/lib/notifications"
-import { addInAppNotification } from "@/components/in-app-notifications"
 import { Pagination } from "@/components/ui/pagination"
 import { ImageSlider } from "@/components/ui/image-slider"
 import { GlobalLoading, InlineLoading } from "@/components/ui/global-loading"
 import { toast } from "sonner"
+import { notificationService } from "@/lib/notifications"
 
 interface Listing {
   id: string
@@ -176,14 +174,6 @@ export function SellerDashboard() {
       // Check for new inquiries and show in-app notifications
       if (inquiries.length > 0 && newInquiries.length > inquiries.length) {
         const newInquiryCount = newInquiries.length - inquiries.length
-        addInAppNotification({
-          type: "inquiry",
-          title: "New Inquiry Received",
-          message: `You have ${newInquiryCount} new inquiry${newInquiryCount > 1 ? "ies" : ""} about your listings`,
-          onClick: () => {
-            setActiveTab("inquiries")
-          },
-        })
         toast.success(`${newInquiryCount} new inquiry${newInquiryCount > 1 ? "ies" : ""} received!`)
       }
     } catch (error) {
@@ -232,11 +222,6 @@ export function SellerDashboard() {
           description: "Your car is now visible to potential buyers",
         })
 
-        addInAppNotification({
-          type: "success",
-          title: "Listing Created",
-          message: "Your car listing has been created successfully!",
-        })
       } else {
         toast.error("Failed to create listing", {
           description: "Please check your details and try again",
@@ -264,7 +249,6 @@ export function SellerDashboard() {
 
   return (
     <div className="space-y-6">
-      <NotificationPermission />
 
       {/* Tab Navigation */}
       <div className="border-b border-gray-200">

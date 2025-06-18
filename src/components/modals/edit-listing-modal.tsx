@@ -13,7 +13,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { ImageUpload } from "@/components/image-upload"
-import { addInAppNotification } from "@/components/in-app-notifications"
 import { toast } from "sonner"
 import { GlobalLoading } from "../ui/global-loading"
 

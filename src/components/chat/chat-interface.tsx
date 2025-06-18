@@ -12,10 +12,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { useChatStore } from "@/store/chat-store"
 import { useSocket } from "@/hooks/use-socket"
-import { notificationService } from "@/lib/notifications"
-import { addInAppNotification } from "@/components/in-app-notifications"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { notificationService } from "@/lib/notifications"
+import { toast } from "sonner"
 
 export function ChatInterface() {
   const { data: session } = useSession()
@@ -131,16 +131,6 @@ export function ChatInterface() {
             window.focus()
           })
 
-          // In-app notification
-          addInAppNotification({
-            type: "message",
-            title: `New message from ${otherUser.name}`,
-            message: data.content.length > 50 ? `${data.content.substring(0, 50)}...` : data.content,
-            onClick: () => {
-              // Already in chat, just focus
-              window.focus()
-            },
-          })
         }
       }
     }
@@ -236,16 +226,12 @@ export function ChatInterface() {
           body: JSON.stringify(messageData),
         })
 
-        if (!response.ok) throw new Error("Failed to send message")
+        if (!response.ok) {
+          toast.error("Failed to send message")
+        } else {
+            toast.success(`Your message was sent to ${otherUser?.name}`)
+        }
 
-        const { message: newMessage } = await response.json()
-
-        // Show success notification
-        addInAppNotification({
-          type: "success",
-          title: "Message Sent",
-          message: `Your message was sent to ${otherUser?.name}`,
-        })
 
         // In development, emit via socket for real-time updates
         if (!isProduction && isConnected) {
@@ -276,11 +262,7 @@ export function ChatInterface() {
         }
       } catch (error) {
         console.error("Error sending message:", error)
-        addInAppNotification({
-          type: "error",
-          title: "Message Failed",
-          message: "Failed to send your message. Please try again.",
-        })
+        toast.error("Failed to send message")
       } finally {
         setIsLoading(false)
       }

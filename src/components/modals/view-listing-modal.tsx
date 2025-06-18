@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ContactSellerModal } from "./contact-seller-modal"
-import { addInAppNotification } from "@/components/in-app-notifications"
 import { ImageSlider } from "@/components/ui/image-slider"
+import { toast } from "sonner"
 
 interface Listing {
   id: string
@@ -59,26 +59,14 @@ export function ViewListingModal({ isOpen, onClose, listing, showContactButton =
 
       if (response.ok) {
         setIsFavorited(true)
-        addInAppNotification({
-          type: "success",
-          title: "Added to Favorites",
-          message: `${listing.title} has been added to your favorites`,
-        })
+        toast.success("Added to favorites successfully")
       } else {
         const data = await response.json()
-        addInAppNotification({
-          type: "error",
-          title: "Failed to Add Favorite",
-          message: data.error || "Could not add to favorites",
-        })
+        toast.error(data.error || "Failed to add to favorites")
       }
     } catch (error) {
       console.error("Error adding to favorites:", error)
-      addInAppNotification({
-        type: "error",
-        title: "Error",
-        message: "An error occurred while adding to favorites",
-      })
+      toast.error("Failed to add to favorites")
     } finally {
       setIsAddingFavorite(false)
     }
