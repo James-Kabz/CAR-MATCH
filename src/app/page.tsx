@@ -7,7 +7,6 @@ import { Navigation } from "../components/navigation"
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation />
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
