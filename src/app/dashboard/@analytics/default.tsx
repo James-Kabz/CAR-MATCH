@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { useQuery } from "@tanstack/react-query"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import { Skeleton } from "@/components/ui/skeleton"
+import Loading from "../loading"
 
 interface ListingViewData {
   id: string
@@ -27,35 +28,48 @@ export default function AnalyticsPage() {
   })
 
   if (error) return <div>Error loading data</div>
-
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <Loading
+          message="Please wait..."
+          className="bg-gray/50"
+          spinnerClassName="text-blue-600 h-16 w-16"
+          messageClassName="text-xl"
+        />
+      </div>
+    )
+  }
   // Calculate average views safely
-  const averageViews = data && data.length > 0 
+  const averageViews = data && data.length > 0
     ? Math.round(data.reduce((acc, curr) => acc + curr.views, 0) / data.length)
     : 0
 
   // Get unique brands with total views
-  const brandViews = data 
+  const brandViews = data
     ? Array.from(new Set(data.map(item => `${item.brand}-${item.model}-${item.year}`)))
-        .map(uniqueId => {
-          const [brand, model, year] = uniqueId.split('-')
-          return {
-            id: uniqueId,
-            brand,
-            model,
-            year: parseInt(year),
-            totalViews: data
-              .filter(item => item.brand === brand && item.model === model && item.year === parseInt(year))
-              .reduce((acc, curr) => acc + curr.views, 0)
-          }
-        })
-        .sort((a, b) => b.totalViews - a.totalViews)
-        .slice(0, 5)
+      .map(uniqueId => {
+        const [brand, model, year] = uniqueId.split('-')
+        return {
+          id: uniqueId,
+          brand,
+          model,
+          year: parseInt(year),
+          totalViews: data
+            .filter(item => item.brand === brand && item.model === model && item.year === parseInt(year))
+            .reduce((acc, curr) => acc + curr.views, 0)
+        }
+      })
+      .sort((a, b) => b.totalViews - a.totalViews)
+      .slice(0, 5)
     : []
+
+
 
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-8">Car Views Analytics</h1>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Top Viewed Cars</CardTitle>
@@ -75,23 +89,23 @@ export default function AnalyticsPage() {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="title" 
-                  angle={-45} 
-                  textAnchor="end" 
+                <XAxis
+                  dataKey="title"
+                  angle={-45}
+                  textAnchor="end"
                   height={80}
                   tickFormatter={(value: string) => `${value.slice(0, 15)}...`}
                 />
                 <YAxis />
-                <Tooltip 
+                <Tooltip
                   formatter={(value: number) => [`${value} views`, 'Views']}
                   labelFormatter={(label: string) => `Car: ${label}`}
                 />
                 <Legend />
-                <Bar 
-                  dataKey="views" 
-                  name="Views" 
-                  fill="#8884d8" 
+                <Bar
+                  dataKey="views"
+                  name="Views"
+                  fill="#8884d8"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
@@ -134,11 +148,11 @@ export default function AnalyticsPage() {
                 <Skeleton className="h-4 w-full" />
               </div>
             ) : (
-              <ul className="space-y-2">
+              <ul className="space-y-">
                 {brandViews.map(({ id, brand, totalViews }) => (
                   <li key={id} className="flex justify-between">
                     <span>{brand}</span>
-                    <span>{totalViews} views</span>
+                    <span >{totalViews} views</span>
                   </li>
                 ))}
               </ul>

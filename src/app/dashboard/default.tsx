@@ -362,7 +362,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
                     {children}
                 </div>
                 {pathname === "/dashboard" && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-7xl mx-auto">
                         <div key="analytics" className="h-full">
                             {analytics}
                         </div>
