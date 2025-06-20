@@ -3,10 +3,10 @@
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import { Navigation } from "@/components/navigation"
-import { BuyerDashboard } from "@/components/buyer-dashboard"
 import { SellerDashboard } from "@/components/seller-dashboard"
 import { GlobalLoading } from "@/components/ui/global-loading"
+import ListingsPage from "./listings/page"
+import Loading from "../loading"
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -17,14 +17,6 @@ export default function DashboardPage() {
       router.push("/signin")
     }
   }, [status, router])
-
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen flex justify-center items-center bg-gray-50">
-        <GlobalLoading message="Loading chats..." size="lg" className="py-20" />
-      </div>
-    )
-  }
 
   if (!session) {
     return null
@@ -43,7 +35,7 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {session.user?.role === "BUYER" ? <BuyerDashboard /> : <SellerDashboard />}
+        {session.user?.role === "BUYER" ? <ListingsPage /> : <SellerDashboard />}
       </div>
     </div>
   )

@@ -22,7 +22,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <Providers>
-          <Navigation />
+          {/* <Navigation /> */}
           <main className="min-h-screen bg-gray-50">{children}</main>
           <Toaster
             position="top-right"

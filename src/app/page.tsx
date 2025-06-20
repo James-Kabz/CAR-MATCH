@@ -2,7 +2,6 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Car, Users, MessageCircle, Search } from "lucide-react"
-import { Navigation } from "../components/navigation"
 
 export default function HomePage() {
   return (
@@ -21,7 +20,7 @@ export default function HomePage() {
                 Get Started
               </Button>
             </Link>
-            <Link href="/listings">
+            <Link href="/dashboard/listings">
               <Button
                 size="lg"
                 variant="outline"

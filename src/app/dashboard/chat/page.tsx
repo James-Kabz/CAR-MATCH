@@ -3,10 +3,10 @@
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import { Navigation } from "@/components/navigation"
 import { ChatSidebar } from "@/components/chat/chat-sidebar"
 import { ChatInterface } from "@/components/chat/chat-interface"
 import { GlobalLoading } from "@/components/ui/global-loading"
+import Loading from "../loading"
 
 export default function ChatPage() {
   const { data: session, status } = useSession()
@@ -20,8 +20,13 @@ export default function ChatPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <GlobalLoading message="Loading your dashboard..." size="lg" className="py-20" />
+      <div className="min-h-screen flex justify-center items-center">
+        <Loading
+          message="Please wait..."
+          className="bg-gray/50"
+          spinnerClassName="text-blue-600 h-16 w-16"
+          messageClassName="text-xl"
+        />
       </div>
     )
   }

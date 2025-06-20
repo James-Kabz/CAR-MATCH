@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { Filter, Car, MapPin, Eye } from "lucide-react"
-import { Navigation } from "@/components/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,8 +11,8 @@ import { Badge } from "@/components/ui/badge"
 import { ViewListingModal } from "@/components/modals/view-listing-modal"
 import { Pagination } from "@/components/ui/pagination"
 import { ImageSlider } from "@/components/ui/image-slider"
-import { GlobalLoading } from "@/components/ui/global-loading"
 import { toast } from "sonner"
+import Loading from "../loading"
 
 interface Listing {
   id: string
@@ -158,13 +157,18 @@ export default function ListingsPage() {
     setSelectedListing(listing)
   }
 
-  if (isLoading && pagination.page === 1) {
-  return (
-    <div className="min-h-screen flex justify-center items-center bg-gray-50">
-      <GlobalLoading message="Loading..." size="lg" className="py-20" />
-    </div>
-  )
-}
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <Loading
+          message="Please wait..."
+          className="bg-gray/50"
+          spinnerClassName="text-blue-600 h-16 w-16"
+          messageClassName="text-xl"
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

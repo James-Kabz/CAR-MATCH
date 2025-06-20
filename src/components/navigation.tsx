@@ -30,7 +30,7 @@ import {
 
 const mainNavigation = [
   { name: "Home", href: "/", icon: Home },
-  { name: "Browse Cars", href: "/listings", icon: Car },
+  { name: "Browse Cars", href: "/dashboard/listings", icon: Car },
 ]
 
 const userNavigation = [
