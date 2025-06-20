@@ -37,13 +37,14 @@ const NAVIGATION_CONFIG = {
         { name: "Dashboard", href: "/dashboard", icon: UserRound },
         { name: "Browse Cars", href: "/dashboard/listings", icon: Car },
     ],
+    seller: [
+        { name: "Manage Listings", href: "/dashboard/manage-listings", icon: Settings },
+        { name: "Enquiries", href: "/dashboard/enquiries", icon: MessageCircle },
+    ],
     user: [
         { name: "Messages", href: "/dashboard/chat", icon: MessageCircle },
         { name: "Favorites", href: "/dashboard/favorites", icon: Heart },
     ],
-    seller: [
-        { name: "Enquiries", href: "/dashboard/enquiries", icon: MessageCircle },
-    ]
 }
 
 function classNames(...classes: string[]) {
@@ -230,7 +231,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
         return (
             <div className="flex items-center space-x-4">
                 <div className="hidden md:flex items-center space-x-2">
-                    <User className="h-4 w-4" />
                     <span className="text-sm text-gray-700">{session.user?.name}</span>
                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                         {session.user?.role}
@@ -357,19 +357,19 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
                     </div>
                 </div>
             </nav>
-            <main className={pathname === "/dashboard" ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : "flex flex-col"}>
-                <div key="children" className={pathname === "/dashboard" ? "lg:col-span-2" : ""}>
+            <main className={pathname === "/dashboard" ? "flex flex-col gap-4" : "flex flex-col"}>
+                <div key="children">
                     {children}
                 </div>
                 {pathname === "/dashboard" && (
-                    <>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-7xl mx-auto">
                         <div key="analytics" className="h-full">
                             {analytics}
                         </div>
                         <div key="engagement" className="h-full">
                             {engagement}
                         </div>
-                    </>
+                    </div>
                 )}
             </main>
 

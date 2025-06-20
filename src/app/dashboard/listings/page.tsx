@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { Filter, Car, MapPin, Eye } from "lucide-react"
+import { Filter, Car, MapPin, Eye, SearchCodeIcon } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,6 +45,27 @@ interface PaginationData {
   totalPages: number
 }
 
+const BUDGET_RANGES = [
+  { label: "0 - 500K", min: 0, max: 500000 },
+  { label: "500K - 1M", min: 500000, max: 1000000 },
+  { label: "1M - 2M", min: 1000000, max: 2000000 },
+  { label: "2M - 3M", min: 2000000, max: 3000000 },
+  { label: "3M - 5M", min: 3000000, max: 5000000 },
+  { label: "5M - 10M", min: 5000000, max: 10000000 },
+  { label: "Above 10M", min: 10000000, max: Infinity },
+]
+
+const YEAR_RANGES = [
+  { label: "2010 - 2015", min: 2010, max: 2015 },
+  { label: "2016 - 2020", min: 2016, max: 2020 },
+  { label: "2021 - 2025", min: 2021, max: 2025 },
+  { label: "2026 - 2030", min: 2026, max: 2030 },
+  // { label: "2031 - 2035", min: 2031, max: 2035 },
+  // { label: "2036 - 2040", min: 2036, max: 2040 },
+  // { label: "2041 - 2045", min: 2041, max: 2045 },
+  // { label: "2046 - 2050", min: 2046, max: 2050 },
+]
+
 export default function ListingsPage() {
   const { data: session } = useSession()
   const [listings, setListings] = useState<Listing[]>([])
@@ -62,21 +83,38 @@ export default function ListingsPage() {
     brand: "all",
     carType: "all",
     condition: "all",
-    minPrice: "",
-    maxPrice: "",
+    budgetRangeIndex: "all",
+    yearRangeIndex: "all",
     location: "",
   })
 
   // Debounce filters to avoid too many API calls
   const [debouncedFilters, setDebouncedFilters] = useState(filters)
+  const [uniqueLocations, setUniqueLocations] = useState<string[]>([])
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedFilters(filters)
+      setDebouncedFilters(prev => ({
+        ...prev,
+        brand: filters.brand,
+        carType: filters.carType,
+        condition: filters.condition,
+        budgetRangeIndex: filters.budgetRangeIndex,
+        yearRangeIndex: filters.yearRangeIndex,
+        location: filters.location,
+      }))
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [filters])
+  }, [
+    filters.brand,
+    filters.carType,
+    filters.condition,
+    filters.budgetRangeIndex,
+    filters.yearRangeIndex,
+    filters.location,
+  ])
+
 
   useEffect(() => {
     fetchListings(1) // Reset to page 1 when filters change
@@ -101,14 +139,25 @@ export default function ListingsPage() {
       if (debouncedFilters.brand !== "all") params.append("brand", debouncedFilters.brand)
       if (debouncedFilters.carType !== "all") params.append("carType", debouncedFilters.carType)
       if (debouncedFilters.condition !== "all") params.append("condition", debouncedFilters.condition)
-      if (debouncedFilters.minPrice) params.append("minPrice", debouncedFilters.minPrice)
-      if (debouncedFilters.maxPrice) params.append("maxPrice", debouncedFilters.maxPrice)
-      if (debouncedFilters.location) params.append("location", debouncedFilters.location)
+      if (debouncedFilters.budgetRangeIndex !== "all") {
+        const range = BUDGET_RANGES[Number(debouncedFilters.budgetRangeIndex)]
+        if (range.min !== undefined) params.append("minPrice", range.min.toString())
+        if (range.max !== Infinity) params.append("maxPrice", range.max.toString())
+      }
+      if (debouncedFilters.yearRangeIndex !== "all") {
+        const yearRange = YEAR_RANGES[Number(debouncedFilters.yearRangeIndex)]
+        if (yearRange.min !== undefined) params.append("minYear", yearRange.min.toString())
+        if (yearRange.max !== undefined) params.append("maxYear", yearRange.max.toString())
+      }
+      if (debouncedFilters.location && debouncedFilters.location !== "all") {
+        params.append("location", debouncedFilters.location)
+      }
 
       const response = await fetch(`/api/listings?${params.toString()}`)
       const data = await response.json()
 
       setListings(data.listings || [])
+      setUniqueLocations(data.uniqueLocations || [])
       setPagination(
         data.pagination || {
           total: data.listings?.length || 0,
@@ -125,15 +174,25 @@ export default function ListingsPage() {
     }
   }
 
+
+  const handleSearchClick = () => {
+    setDebouncedFilters(prev => ({
+      ...prev,
+      search: filters.search.toLowerCase(),
+    }))
+    fetchListings(1) // reset to page 1 on new search
+  }
+
+
   const clearFilters = () => {
     setFilters({
       search: "",
       brand: "all",
       carType: "all",
       condition: "all",
-      minPrice: "",
-      maxPrice: "",
-      location: "",
+      budgetRangeIndex: "all",
+      yearRangeIndex: "all",
+      location: "all",
     })
   }
 
@@ -191,13 +250,18 @@ export default function ListingsPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
+              <div className="flex gap-2">
                 <Input
                   placeholder="Search cars..."
                   value={filters.search}
                   onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearchClick()} // Optional: support Enter key
                 />
+                <Button onClick={handleSearchClick}>
+                  <SearchCodeIcon />
+                </Button>
               </div>
+
 
               <Select value={filters.brand} onValueChange={(value) => setFilters({ ...filters, brand: value })}>
                 <SelectTrigger>
@@ -251,23 +315,60 @@ export default function ListingsPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              <Input
-                placeholder="Min Price (KES)"
-                type="number"
-                value={filters.minPrice}
-                onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
-              />
-              <Input
-                placeholder="Max Price (KES)"
-                type="number"
-                value={filters.maxPrice}
-                onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
-              />
-              <Input
-                placeholder="Location (e.g., Nairobi, Mombasa)"
+              <Select
+                value={filters.budgetRangeIndex}
+                onValueChange={(value) => setFilters({ ...filters, budgetRangeIndex: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Budget Range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Budgets</SelectItem>
+                  {BUDGET_RANGES.map((range, index) => (
+                    <SelectItem key={index} value={index.toString()}>
+                      {range.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* year filter */}
+              <Select
+                value={filters.yearRangeIndex}
+                onValueChange={(value) => setFilters({ ...filters, yearRangeIndex: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Year Range">
+                    {YEAR_RANGES[Number(filters.yearRangeIndex)]?.label ?? "Select Year Range"}
+                  </SelectValue>
+
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Years</SelectItem>
+                  {YEAR_RANGES.map((range, index) => (
+                    <SelectItem key={index} value={index.toString()}>
+                      {range.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
                 value={filters.location}
-                onChange={(e) => setFilters({ ...filters, location: e.target.value })}
-              />
+                onValueChange={(value) => setFilters({ ...filters, location: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  {uniqueLocations.map((location, index) => (
+                    <SelectItem key={index} value={location}>
+                      {location}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>

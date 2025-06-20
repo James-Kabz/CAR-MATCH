@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { Filter, Car, MapPin, Eye } from "lucide-react"
+import { Filter, Car, MapPin, Eye, SearchCodeIcon } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,6 +45,17 @@ interface PaginationData {
   totalPages: number
 }
 
+const BUDGET_RANGES = [
+  { label: "0 - 500K", min: 0, max: 500000 },
+  { label: "500K - 1M", min: 500000, max: 1000000 },
+  { label: "1M - 2M", min: 1000000, max: 2000000 },
+  { label: "2M - 3M", min: 2000000, max: 3000000 },
+  { label: "3M - 5M", min: 3000000, max: 5000000 },
+  { label: "5M - 10M", min: 5000000, max: 10000000 },
+  { label: "Above 10M", min: 10000000, max: Infinity },
+]
+
+
 export default function ListingsPage() {
   const { data: session } = useSession()
   const [listings, setListings] = useState<Listing[]>([])
@@ -62,8 +73,7 @@ export default function ListingsPage() {
     brand: "all",
     carType: "all",
     condition: "all",
-    minPrice: "",
-    maxPrice: "",
+    budgetRangeIndex: "all",
     location: "",
   })
 
@@ -72,11 +82,25 @@ export default function ListingsPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedFilters(filters)
+      setDebouncedFilters(prev => ({
+        ...prev,
+        brand: filters.brand,
+        carType: filters.carType,
+        condition: filters.condition,
+        budgetRangeIndex: filters.budgetRangeIndex,
+        location: filters.location,
+      }))
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [filters])
+  }, [
+    filters.brand,
+    filters.carType,
+    filters.condition,
+    filters.budgetRangeIndex,
+    filters.location,
+  ])
+
 
   useEffect(() => {
     fetchListings(1) // Reset to page 1 when filters change
@@ -101,8 +125,12 @@ export default function ListingsPage() {
       if (debouncedFilters.brand !== "all") params.append("brand", debouncedFilters.brand)
       if (debouncedFilters.carType !== "all") params.append("carType", debouncedFilters.carType)
       if (debouncedFilters.condition !== "all") params.append("condition", debouncedFilters.condition)
-      if (debouncedFilters.minPrice) params.append("minPrice", debouncedFilters.minPrice)
-      if (debouncedFilters.maxPrice) params.append("maxPrice", debouncedFilters.maxPrice)
+      if (debouncedFilters.budgetRangeIndex !== "all") {
+        const range = BUDGET_RANGES[Number(debouncedFilters.budgetRangeIndex)]
+        if (range.min !== undefined) params.append("minPrice", range.min.toString())
+        if (range.max !== Infinity) params.append("maxPrice", range.max.toString())
+      }
+
       if (debouncedFilters.location) params.append("location", debouncedFilters.location)
 
       const response = await fetch(`/api/listings?${params.toString()}`)
@@ -125,14 +153,23 @@ export default function ListingsPage() {
     }
   }
 
+
+  const handleSearchClick = () => {
+    setDebouncedFilters(prev => ({
+      ...prev,
+      search: filters.search.toLowerCase(),
+    }))
+    fetchListings(1) // reset to page 1 on new search
+  }
+
+
   const clearFilters = () => {
     setFilters({
       search: "",
       brand: "all",
       carType: "all",
       condition: "all",
-      minPrice: "",
-      maxPrice: "",
+      budgetRangeIndex: "",
       location: "",
     })
   }
@@ -191,13 +228,18 @@ export default function ListingsPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
+              <div className="flex gap-2">
                 <Input
                   placeholder="Search cars..."
                   value={filters.search}
                   onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearchClick()} // Optional: support Enter key
                 />
+                <Button onClick={handleSearchClick}>
+                  <SearchCodeIcon />
+                </Button>
               </div>
+
 
               <Select value={filters.brand} onValueChange={(value) => setFilters({ ...filters, brand: value })}>
                 <SelectTrigger>
@@ -251,18 +293,24 @@ export default function ListingsPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-              <Input
-                placeholder="Min Price (KES)"
-                type="number"
-                value={filters.minPrice}
-                onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
-              />
-              <Input
-                placeholder="Max Price (KES)"
-                type="number"
-                value={filters.maxPrice}
-                onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
-              />
+              <Select
+                value={filters.budgetRangeIndex}
+                onValueChange={(value) => setFilters({ ...filters, budgetRangeIndex: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Budget Range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Budgets</SelectItem>
+                  {BUDGET_RANGES.map((range, index) => (
+                    <SelectItem key={index} value={index.toString()}>
+                      {range.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+
               <Input
                 placeholder="Location (e.g., Nairobi, Mombasa)"
                 value={filters.location}

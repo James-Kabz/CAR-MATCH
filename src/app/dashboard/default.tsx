@@ -34,16 +34,17 @@ import AnalyticsPage from "./@analytics/page"
 const NAVIGATION_CONFIG = {
     main: [
         { name: "Home", href: "/", icon: Home },
+        { name: "Dashboard", href: "/dashboard", icon: UserRound },
         { name: "Browse Cars", href: "/dashboard/listings", icon: Car },
     ],
+    seller: [
+        { name: "Manage Listings", href: "/dashboard/manage-listings", icon: Settings },
+        { name: "Enquiries", href: "/dashboard/enquiries", icon: MessageCircle },
+    ],
     user: [
-        { name: "Dashboard", href: "/dashboard", icon: UserRound },
         { name: "Messages", href: "/dashboard/chat", icon: MessageCircle },
         { name: "Favorites", href: "/dashboard/favorites", icon: Heart },
     ],
-    seller: [
-        { name: "Enquiries", href: "/dashboard/enquiries", icon: MessageCircle },
-    ]
 }
 
 function classNames(...classes: string[]) {
@@ -53,9 +54,10 @@ function classNames(...classes: string[]) {
 type DashboardLayoutProps = {
     children: React.ReactNode
     analytics: React.ReactNode
+    engagement: React.ReactNode
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, engagement }) => {
     const { data: session } = useSession()
     const pathname = usePathname()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -229,7 +231,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics }
         return (
             <div className="flex items-center space-x-4">
                 <div className="hidden md:flex items-center space-x-2">
-                    <User className="h-4 w-4" />
                     <span className="text-sm text-gray-700">{session.user?.name}</span>
                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                         {session.user?.role}
@@ -356,10 +357,22 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics }
                     </div>
                 </div>
             </nav>
-            <main className="flex-1">
-                <div key="children">{children}</div>
-                <div key="analytics">{analytics}</div>
+            <main className={pathname === "/dashboard" ? "flex flex-col gap-4" : "flex flex-col"}>
+                <div key="children">
+                    {children}
+                </div>
+                {pathname === "/dashboard" && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div key="analytics" className="h-full">
+                            {analytics}
+                        </div>
+                        <div key="engagement" className="h-full">
+                            {engagement}
+                        </div>
+                    </div>
+                )}
             </main>
+
 
 
         </div>

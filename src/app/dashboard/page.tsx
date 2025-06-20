@@ -35,7 +35,7 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* {session.user?.role === "BUYER" ? <ListingsPage /> : <SellerDashboard />} */}
+        {/* {session.user?.role === "SELLER" ?<SellerDashboard /> : <SellerDashboard />} */}
       </div>
     </div>
   )
