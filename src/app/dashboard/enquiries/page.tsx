@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { MessageCircle, Car, Calendar, Phone, Mail, User } from "lucide-react"
-import { Navigation } from "@/components/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +10,7 @@ import { Pagination } from "@/components/ui/pagination"
 import { RespondInquiryModal } from "@/components/modals/respond-inquiry-modal"
 import { GlobalLoading } from "@/components/ui/global-loading"
 import { toast } from "sonner"
+import Loading from "../loading"
 
 interface Enquiry {
   id: string
@@ -100,8 +100,13 @@ export default function EnquiriesPage() {
 
   if (isLoading && pagination.page === 1) {
     return (
-      <div className="min-h-screen flex justify-center items-center bg-gray-50">
-        <GlobalLoading message="Loading your enquiries..." size="lg" className="py-20" />
+      <div className="min-h-screen flex justify-center items-center">
+        <Loading
+          message="Please wait..."
+          className="bg-gray/50"
+          spinnerClassName="text-blue-600 h-16 w-16"
+          messageClassName="text-xl"
+        />
       </div>
     )
   }

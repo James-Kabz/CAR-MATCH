@@ -50,13 +50,15 @@ export function ContactSellerModal({ isOpen, onClose, listingId, sellerId, listi
         const data = await response.json()
         toast.error(data.error || "Failed to send inquiry")
       } else {
-        toast.success("Inquiry sent successfully")
+        toast.success("Inquiry sent successfully", {
+          description: "We'll get back to you soon.",
+        })
       }
 
       // Success
       onClose()
       setMessage("")
-      router.push("/dashboard?tab=inquiries")
+      router.push("/dashboard")
     } catch (error) {
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {

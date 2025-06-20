@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Heart, MapPin, DollarSign, Car, MessageCircle } from "lucide-react"
-import { Navigation } from "@/components/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -13,6 +12,7 @@ import { Pagination } from "@/components/ui/pagination"
 import { ImageSlider } from "@/components/ui/image-slider"
 import { GlobalLoading } from "@/components/ui/global-loading"
 import { toast } from "sonner"
+import Loading from "../loading"
 
 interface Favorite {
   id: string
@@ -127,10 +127,16 @@ export default function FavoritesPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen flex justify-center items-center bg-gray-50">
-        <GlobalLoading message="Loading your favorites..." size="lg" className="py-20" />
+      <div className="min-h-screen flex justify-center items-center">
+        <Loading
+          message="Please wait..."
+          className="bg-gray/50"
+          spinnerClassName="text-blue-600 h-16 w-16"
+          messageClassName="text-xl"
+        />
       </div>
     )
+
   }
 
   if (!session) {

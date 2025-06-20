@@ -53,7 +53,10 @@ export async function GET(request: NextRequest) {
     const condition = searchParams.get("condition") || ""
     const minPrice = searchParams.get("minPrice")
     const maxPrice = searchParams.get("maxPrice")
-    const location = searchParams.get("location") || ""
+    const location = searchParams.get("location")
+    const minYear = searchParams.get("minYear")
+    const maxYear = searchParams.get("maxYear")
+
 
     // Handle the special case for current user
     if (sellerId === "?current" || sellerId === "current") {
@@ -90,6 +93,14 @@ export async function GET(request: NextRequest) {
       where.condition = condition
     }
 
+    // Year range filters
+    if (minYear) {
+      where.year = { ...where.year, gte: Number.parseInt(minYear) }
+    }
+    if (maxYear) {
+      where.year = { ...where.year, lte: Number.parseInt(maxYear) }
+    }
+
     // Price range filters
     if (minPrice) {
       where.price = { ...where.price, gte: Number.parseInt(minPrice) }
@@ -97,14 +108,23 @@ export async function GET(request: NextRequest) {
     if (maxPrice) {
       where.price = { ...where.price, lte: Number.parseInt(maxPrice) }
     }
-
-    // Case-insensitive location filter
-    if (location) {
-      where.location = { contains: location, mode: "insensitive" }
-    }
+    // In your API route's where clause
+    if (location && typeof location === "string" && location !== "all") {
+  where.location = { equals: location, mode: "insensitive" }
+}
 
     // Get total count for pagination
     const totalCount = await prisma.listing.count({ where })
+
+    const uniqueLocations = await prisma.listing.findMany({
+      distinct: ['location'],
+      select: {
+        location: true
+      },
+      where: {
+        location: { not: "" }
+      }
+    })
 
     // Get paginated listings
     const listings = await prisma.listing.findMany({
@@ -129,6 +149,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       listings,
+      uniqueLocations: uniqueLocations.map((l) => l.location),
       pagination: {
         total: totalCount,
         page,

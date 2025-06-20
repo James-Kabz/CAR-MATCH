@@ -16,9 +16,11 @@ import { DeleteListingModal } from "@/components/modals/delete-listing-modal"
 import { ImageUpload } from "@/components/image-upload"
 import { Pagination } from "@/components/ui/pagination"
 import { ImageSlider } from "@/components/ui/image-slider"
-import { GlobalLoading, InlineLoading } from "@/components/ui/global-loading"
+// import { GlobalLoading, InlineLoading } from "@/components/ui/global-loading"
 import { toast } from "sonner"
 import { notificationService } from "@/lib/notifications"
+import Loading from "@/app/loading"
+import { InlineLoading } from "./ui/global-loading"
 
 interface Listing {
   id: string
@@ -255,11 +257,10 @@ export function SellerDashboard() {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab("listings")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "listings"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "listings"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             <Car className="h-4 w-4 inline mr-2" />
             My Listings ({listingsPagination.total})
@@ -422,7 +423,11 @@ export function SellerDashboard() {
 
                   <div className="flex space-x-4">
                     <Button type="submit" disabled={isCreatingListing}>
-                      {isCreatingListing ? <InlineLoading message="Creating listing..." /> : "Create Listing"}
+                      {isCreatingListing ? <InlineLoading
+                        message="Creating listing..."
+                        size="md"
+                        className="text-blue-600"
+                      /> : "Create Listing"}
                     </Button>
                     <Button type="button" variant="outline" onClick={() => setShowAddForm(false)}>
                       Cancel
@@ -436,7 +441,12 @@ export function SellerDashboard() {
           {/* Listings Grid */}
           <div className="space-y-4">
             {isLoadingListings ? (
-              <GlobalLoading message="Loading your car listings..." size="lg" />
+              <Loading
+                message="Please wait..."
+                className="bg-black/50" // semi-transparent black background
+                spinnerClassName="text-blue-500 h-16 w-16" // purple spinner, larger size
+                messageClassName="text-white text-xl" // white text, larger font
+              />
             ) : listings.length === 0 ? (
               <Card>
                 <CardContent className="text-center py-8">
@@ -606,7 +616,7 @@ export function SellerDashboard() {
               ))}
 
               {/* Pagination for inquiries */}
-              {/* {inquiriesPagination.totalPages > 1 && (
+      {/* {inquiriesPagination.totalPages > 1 && (
                 <div className="mt-6">
                   <Pagination
                     currentPage={inquiriesPagination.page}

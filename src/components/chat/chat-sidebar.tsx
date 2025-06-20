@@ -5,6 +5,7 @@ import { format } from "date-fns"
 import { useChatStore } from "@/store/chat-store"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { InlineLoading } from "@/app/loading"
 
 export function ChatSidebar() {
   const { data: session } = useSession()
@@ -13,7 +14,11 @@ export function ChatSidebar() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[600px] border rounded-lg p-4">
-        <p>Loading chats...</p>
+        <InlineLoading
+          message="Loading chats..."
+          size="md"
+          className="text-blue-600"
+        />
       </div>
     )
   }
@@ -45,9 +50,8 @@ export function ChatSidebar() {
           return (
             <div
               key={chat.id}
-              className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
-                activeChat?.id === chat.id ? "bg-blue-50" : ""
-              }`}
+              className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${activeChat?.id === chat.id ? "bg-blue-50" : ""
+                }`}
               onClick={() => setActiveChat(chat.id)}
             >
               <div className="flex items-center">

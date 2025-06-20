@@ -3,10 +3,10 @@
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import { Navigation } from "@/components/navigation"
-import { BuyerDashboard } from "@/components/buyer-dashboard"
 import { SellerDashboard } from "@/components/seller-dashboard"
 import { GlobalLoading } from "@/components/ui/global-loading"
+import ListingsPage from "./listings/page"
+import Loading from "../loading"
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -18,32 +18,24 @@ export default function DashboardPage() {
     }
   }, [status, router])
 
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen flex justify-center items-center bg-gray-50">
-        <GlobalLoading message="Loading chats..." size="lg" className="py-20" />
-      </div>
-    )
-  }
-
   if (!session) {
     return null
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className=" bg-gray-50">
 
-      <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="text-center mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Welcome back, {session.user?.name}!</h1>
           <p className="text-gray-600">
             {session.user?.role === "BUYER"
-              ? "Find your perfect car match"
-              : "Manage your listings and connect with buyers"}
+              ? "Find your perfect car match...Here is some analytics data"
+              : "Manage your listings and connect with buyers...Here is some analytics data"}
           </p>
         </div>
 
-        {session.user?.role === "BUYER" ? <BuyerDashboard /> : <SellerDashboard />}
+        {/* {session.user?.role === "SELLER" ?<SellerDashboard /> : <SellerDashboard />} */}
       </div>
     </div>
   )
