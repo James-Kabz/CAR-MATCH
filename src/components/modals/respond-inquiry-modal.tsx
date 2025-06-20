@@ -79,9 +79,9 @@ export function RespondInquiryModal({
           <DialogDescription>Your response will start a chat conversation</DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4 p-3 bg-gray-50 rounded-md text-sm">
+        <div className="mt-4 p-3 bg-secondary text-foreground rounded-md text-sm">
           <p className="font-medium mb-1">Original inquiry:</p>
-          <p className="text-gray-700">{inquiryMessage}</p>
+          <p className="">{inquiryMessage}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -102,7 +102,7 @@ export function RespondInquiryModal({
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading || !response.trim()}>
+            <Button variant={'secondary'} type="submit" disabled={isLoading || !response.trim()}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

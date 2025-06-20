@@ -1,12 +1,30 @@
+"use client"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Car, Users, MessageCircle, Search } from "lucide-react"
-import { Navigation } from "@/components/navigation"
+import { useState } from "react"
+import Loading from "./loading"
 
 export default function HomePage() {
+
+  const [isLoading] = useState(false)
+
+
+  if (isLoading) {
+      return (
+        <div className="min-h-screen flex justify-center items-center">
+          <Loading
+            message="Please wait..."
+            className="bg-gray/50"
+            spinnerClassName="text-blue-600 h-16 w-16"
+            messageClassName="text-xl"
+          />
+        </div>
+      )
+    }
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-background text-foreground">
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -37,8 +55,8 @@ export default function HomePage() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">How CarMatch Works</h2>
-            <p className="text-xl text-gray-600">Simple, efficient, and intelligent car buying and selling</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-muted-foreground mb-4">How CarMatch Works</h2>
+            <p className="text-xl text-muted-foreground">Simple, efficient, and intelligent car buying and selling</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">

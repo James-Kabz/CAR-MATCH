@@ -128,15 +128,6 @@ export function EditListingModal({ isOpen, onClose, listing, onUpdate }: EditLis
     setFormData({ ...formData, images })
   }
 
-
-   if (status === "loading") {
-      return (
-        <div className="min-h-screen bg-gray-50">
-          <GlobalLoading message="Loading your listing..." size="lg" className="py-20" />
-        </div>
-      )
-    }
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">

@@ -6,6 +6,7 @@ import { Navigation } from "@/components/navigation"
 import { Toaster } from "sonner"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { ThemeProvider } from "@/components/theme-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -22,21 +23,30 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions)
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <Providers session={session}>
-          {/* Only show navigation if user is not logged in */}
-          {!session && <Navigation />}
-          <main className="min-h-screen bg-gray-50">{children}</main>
-          <Toaster
-            position="top-right"
-            richColors
-            closeButton
-            toastOptions={{
-              duration: 4000,
-            }}
-          />
-        </Providers>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange>
+          <Providers session={session}>
+            {/* Only show navigation if user is not logged in */}
+            {!session && <Navigation />}
+            <main className="bg-background text-foreground">
+              {children}
+            </main>
+
+            <Toaster
+              position="top-right"
+              richColors
+              closeButton
+              toastOptions={{
+                duration: 4000,
+              }}
+            />
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   )
