@@ -34,10 +34,10 @@ import AnalyticsPage from "./@analytics/page"
 const NAVIGATION_CONFIG = {
     main: [
         { name: "Home", href: "/", icon: Home },
+        { name: "Dashboard", href: "/dashboard", icon: UserRound },
         { name: "Browse Cars", href: "/dashboard/listings", icon: Car },
     ],
     user: [
-        { name: "Dashboard", href: "/dashboard", icon: UserRound },
         { name: "Messages", href: "/dashboard/chat", icon: MessageCircle },
         { name: "Favorites", href: "/dashboard/favorites", icon: Heart },
     ],
@@ -53,9 +53,10 @@ function classNames(...classes: string[]) {
 type DashboardLayoutProps = {
     children: React.ReactNode
     analytics: React.ReactNode
+    engagement: React.ReactNode
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, engagement }) => {
     const { data: session } = useSession()
     const pathname = usePathname()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -356,24 +357,37 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics }
                     </div>
                 </div>
             </nav>
-            <main className="flex-1">
-                {/* {isProduction && <AnalyticsPage />} */}
-                {children}
-                 {/* {analytics} */}
+            <main className={pathname === "/dashboard" ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : "flex flex-col"}>
+                <div key="children" className={pathname === "/dashboard" ? "lg:col-span-2" : ""}>
+                    {children}
+                </div>
+                {pathname === "/dashboard" && (
+                    <>
+                        <div key="analytics" className="h-full">
+                            {analytics}
+                        </div>
+                        <div key="engagement" className="h-full">
+                            {engagement}
+                        </div>
+                    </>
+                )}
             </main>
+
+
+
         </div>
     )
 
     return (
         <Suspense fallback={
-        <div className="min-h-screen flex justify-center items-center">
-            <Loading
-                message="Please wait..."
-                className="bg-gray/50"
-                spinnerClassName="text-blue-600 h-16 w-16"
-                messageClassName="text-xl"
-            />
-        </div>}>
+            <div className="min-h-screen flex justify-center items-center">
+                <Loading
+                    message="Please wait..."
+                    className="bg-gray/50"
+                    spinnerClassName="text-blue-600 h-16 w-16"
+                    messageClassName="text-xl"
+                />
+            </div>}>
             {renderContent()}
         </Suspense>
     )

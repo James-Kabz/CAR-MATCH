@@ -357,23 +357,24 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics }
                 </div>
             </nav>
             <main className="flex-1">
-                {/* {isProduction && <AnalyticsPage />} */}
-                {children}
-                 {/* {analytics} */}
+                <div key="children">{children}</div>
+                <div key="analytics">{analytics}</div>
             </main>
+
+
         </div>
     )
 
     return (
         <Suspense fallback={
-        <div className="min-h-screen flex justify-center items-center">
-            <Loading
-                message="Please wait..."
-                className="bg-gray/50"
-                spinnerClassName="text-blue-600 h-16 w-16"
-                messageClassName="text-xl"
-            />
-        </div>}>
+            <div className="min-h-screen flex justify-center items-center">
+                <Loading
+                    message="Please wait..."
+                    className="bg-gray/50"
+                    spinnerClassName="text-blue-600 h-16 w-16"
+                    messageClassName="text-xl"
+                />
+            </div>}>
             {renderContent()}
         </Suspense>
     )
