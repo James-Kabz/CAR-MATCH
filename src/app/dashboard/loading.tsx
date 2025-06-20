@@ -24,7 +24,7 @@ export default function Loading({
 }: LoadingProps) {
   return (
     <div className={cn(
-      "fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center",
+      "fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center",
       className
     )}>
       <div className="flex flex-col items-center space-y-4">

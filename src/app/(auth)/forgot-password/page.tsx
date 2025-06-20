@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto h-12 w-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
@@ -63,7 +63,7 @@ export default function ForgotPasswordPage() {
             <CardDescription>We've sent a password reset link to {email}</CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
-            <p className="bg-green-300 text-gray-600 rounded-md">
+            <p className="bg-green-400 text-gray-900 rounded-md">
               Click the link in the email to reset your password. The link will expire in 1 hour.
             </p>
             <div className="space-y-2">
@@ -91,7 +91,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
@@ -103,7 +103,7 @@ export default function ForgotPasswordPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email" className="mb-3">Email Address</Label>
               <Input
                 id="email"
                 type="email"
@@ -114,7 +114,7 @@ export default function ForgotPasswordPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button variant={"default"} type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Sending Reset Link..." : "Send Reset Link"}
             </Button>
           </form>

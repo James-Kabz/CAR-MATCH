@@ -112,11 +112,11 @@ export default function EnquiriesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background text-foreground">
 
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Enquiries</h1>
+          <h1 className="text-3xl font-bold ">My Enquiries</h1>
           <p className="text-gray-600">Manage enquiries from potential buyers</p>
         </div>
 
@@ -136,7 +136,7 @@ export default function EnquiriesPage() {
                   <div className="flex justify-between items-start">
                     <div className="flex space-x-4">
                       {/* Car image */}
-                      <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                      <div className="w-20 h-20 bg-background rounded-lg overflow-hidden flex-shrink-0">
                         {enquiry.listing.images.length > 0 ? (
                           <img
                             src={enquiry.listing.images[0] || "/placeholder.svg"}
@@ -174,23 +174,23 @@ export default function EnquiriesPage() {
                 <CardContent>
                   <div className="space-y-4">
                     {/* Buyer information */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="bg-secondary p-4 rounded-lg">
                       <h4 className="font-medium mb-2 flex items-center">
                         <User className="h-4 w-4 mr-2" />
                         Buyer Information
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
                         <div className="flex items-center">
-                          <User className="h-3 w-3 mr-1 text-gray-400" />
+                          <User className="h-3 w-3 mr-1 " />
                           {enquiry.buyer.name}
                         </div>
                         <div className="flex items-center">
-                          <Mail className="h-3 w-3 mr-1 text-gray-400" />
+                          <Mail className="h-3 w-3 mr-1 " />
                           {enquiry.buyer.email}
                         </div>
                         {enquiry.buyer.phone && (
                           <div className="flex items-center">
-                            <Phone className="h-3 w-3 mr-1 text-gray-400" />
+                            <Phone className="h-3 w-3 mr-1 " />
                             {enquiry.buyer.phone}
                           </div>
                         )}
@@ -200,12 +200,12 @@ export default function EnquiriesPage() {
                     {/* Message */}
                     <div>
                       <h4 className="font-medium mb-2">Message</h4>
-                      <p className="text-gray-700 bg-white p-3 rounded border">{enquiry.message}</p>
+                      <p className="bg-secondary p-3 rounded border">{enquiry.message}</p>
                     </div>
 
                     {/* Actions */}
                     <div className="flex justify-end">
-                      <Button onClick={() => setSelectedEnquiry(enquiry)}>
+                      <Button variant={"default"} onClick={() => setSelectedEnquiry(enquiry)}>
                         <MessageCircle className="h-4 w-4 mr-2" />
                         {enquiry.status === "PENDING" ? "Respond" : "View Response"}
                       </Button>

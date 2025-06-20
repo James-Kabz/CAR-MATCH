@@ -83,8 +83,8 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
           <div className="mx-auto h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <Car className="h-6 w-6 text-blue-600" />
@@ -95,7 +95,7 @@ export default function SignUpPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name" className="mb-3">Full Name</Label>
               <Input
                 id="name"
                 type="text"
@@ -107,7 +107,7 @@ export default function SignUpPage() {
             </div>
 
             <div>
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email" className="mb-3">Email Address</Label>
               <Input
                 id="email"
                 type="email"
@@ -119,7 +119,7 @@ export default function SignUpPage() {
             </div>
 
             <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="mb-3">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -146,7 +146,7 @@ export default function SignUpPage() {
             </div>
 
             <div>
-              <Label htmlFor="role">I want to</Label>
+              <Label htmlFor="role" className="mb-3">I want to</Label>
               <Select onValueChange={(value) => setFormData({ ...formData, role: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select your role" />
@@ -159,7 +159,7 @@ export default function SignUpPage() {
             </div>
 
             <div>
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="phone" className="mb-3">Phone Number</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -170,7 +170,7 @@ export default function SignUpPage() {
             </div>
 
             <div>
-              <Label htmlFor="location">Location</Label>
+              <Label htmlFor="location" className="mb-3">Location</Label>
               <Input
                 id="location"
                 type="text"
@@ -181,7 +181,7 @@ export default function SignUpPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button variant={'secondary'} type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Creating Account..." : "Create Account"}
             </Button>
           </form>

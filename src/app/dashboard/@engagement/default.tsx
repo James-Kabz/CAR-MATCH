@@ -34,18 +34,7 @@ export default function EngagementAnalyticsPage() {
   })
 
   if (error) return <div>Error loading data</div>
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex justify-center items-center">
-        <Loading
-          message="Please wait..."
-          className="bg-gray/50"
-          spinnerClassName="text-blue-600 h-16 w-16"
-          messageClassName="text-xl"
-        />
-      </div>
-    )
-  }
+
 
   // Calculate summary metrics
   const totalUsers = data?.length || 0
@@ -221,27 +210,27 @@ export default function EngagementAnalyticsPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-primary-foreground text-foreground">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matches</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Messages</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Favorites</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Calls</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Drives</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Active</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">User</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Matches</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Messages</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Favorites</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Calls</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Test Drives</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Last Active</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-background">
                   {data?.map((user) => (
                     <tr key={user.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.userName}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.matches}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.messagesSent}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.favoritesAdded}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.callsMade}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.testDrivesScheduled}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{user.userName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{user.matches}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{user.messagesSent}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{user.favoritesAdded}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{user.callsMade}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{user.testDrivesScheduled}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
                         {new Date(user.lastActive).toLocaleDateString()}
                       </td>
                     </tr>

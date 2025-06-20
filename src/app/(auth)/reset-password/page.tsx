@@ -99,7 +99,7 @@ export default function ResetPasswordPage() {
 
   if (tokenValid === false) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold text-red-600">Invalid Reset Link</CardTitle>
@@ -124,7 +124,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
@@ -136,7 +136,7 @@ export default function ResetPasswordPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="password">New Password</Label>
+              <Label htmlFor="password" className="mb-3">New Password</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -163,7 +163,7 @@ export default function ResetPasswordPage() {
             </div>
 
             <div>
-              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Label htmlFor="confirmPassword" className="mb-3">Confirm New Password</Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
@@ -189,7 +189,7 @@ export default function ResetPasswordPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button variant={"default"} type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Resetting Password..." : "Reset Password"}
             </Button>
           </form>

@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/sheet"
 import Loading from "./loading"
 import AnalyticsPage from "./@analytics/page"
+import { ModeToggle } from "@/components/theme-toggle"
 // import Loading from "@/app/loading"
 
 // Navigation configuration
@@ -323,6 +324,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
                         </Menu.Items>
                     </Transition>
                 </Menu>
+
+                <ModeToggle />
             </div>
         )
     }
@@ -362,7 +365,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
                     {children}
                 </div>
                 {pathname === "/dashboard" && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-7xl mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 max-w-7xl mx-auto">
                         <div key="analytics" className="h-full">
                             {analytics}
                         </div>
@@ -383,7 +386,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
             <div className="min-h-screen flex justify-center items-center">
                 <Loading
                     message="Please wait..."
-                    className="bg-gray/50"
+                    className=""
                     spinnerClassName="text-blue-600 h-16 w-16"
                     messageClassName="text-xl"
                 />

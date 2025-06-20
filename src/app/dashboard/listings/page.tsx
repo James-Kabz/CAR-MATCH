@@ -230,12 +230,12 @@ export default function ListingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-background text-foreground">
 
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Browse Cars</h1>
-          <p className="text-gray-600">Find your perfect car from our listings</p>
+          <h1 className="text-3xl font-bold">Browse Cars</h1>
+          <p>Find your perfect car from our listings</p>
         </div>
 
         {/* Filters */}
@@ -375,18 +375,18 @@ export default function ListingsPage() {
 
         {/* Results */}
         <div className="mb-4 flex justify-between items-center">
-          <p className="text-gray-600">
+          <p>
             {pagination.total} car{pagination.total !== 1 ? "s" : ""} found
           </p>
-          {isLoading && <div className="text-sm text-gray-500">Searching...</div>}
+          {isLoading && <div className="text-sm">Searching...</div>}
         </div>
 
         {listings.length === 0 && !isLoading ? (
           <Card>
             <CardContent className="text-center py-12">
-              <Car className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No cars found</h3>
-              <p className="text-gray-600">Try adjusting your filters to see more results</p>
+              <Car className="h-12 w-12 mx-auto mb-4" />
+              <h3 className="text-lg font-medium ">No cars found</h3>
+              <p >Try adjusting your filters to see more results</p>
             </CardContent>
           </Card>
         ) : (
@@ -405,37 +405,37 @@ export default function ListingsPage() {
                       <Badge variant="outline">{listing.condition}</Badge>
                     </div>
 
-                    <p className="text-gray-600 mb-3">
+                    <p className=" mb-3">
                       {listing.year} {listing.brand} {listing.model}
                     </p>
 
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center text-sm text-gray-600">
+                        <div className="flex items-center text-sm ">
                           <span className="text-lg font-semibold text-green-600">
                             KES {listing.price.toLocaleString()}
                           </span>
                         </div>
-                        <div className="flex items-center text-sm text-gray-600">
+                        <div className="flex items-center text-sm ">
                           <Eye className="h-4 w-4 mr-1" />
                           {listing.views}
                         </div>
                       </div>
 
-                      <div className="flex items-center text-sm text-gray-600">
+                      <div className="flex items-center text-sm ">
                         <MapPin className="h-4 w-4 mr-1" />
                         {listing.location}
                       </div>
 
                       {listing.mileage && (
-                        <div className="flex items-center text-sm text-gray-600">
+                        <div className="flex items-center text-sm ">
                           <Car className="h-4 w-4 mr-1" />
                           {listing.mileage.toLocaleString()} km
                         </div>
                       )}
                     </div>
 
-                    <Button className="w-full" onClick={() => handleViewListing(listing)}>
+                    <Button variant="default" className="w-full" onClick={() => handleViewListing(listing)}>
                       View Details
                     </Button>
                   </div>

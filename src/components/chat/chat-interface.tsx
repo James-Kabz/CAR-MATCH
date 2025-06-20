@@ -321,17 +321,17 @@ export function ChatInterface() {
 
   if (!activeChat) {
     return (
-      <div className="flex flex-col items-center justify-center h-[500px] bg-gray-50 rounded-lg">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Select a conversation</h3>
-        <p className="text-gray-600">Choose a chat from the sidebar to start messaging</p>
+      <div className="flex flex-col items-center justify-center h-[500px] bg-card text-card-foreground rounded-lg">
+        <h3 className="text-lg font-medium">Select a conversation</h3>
+        <p className="text-muted-foreground">Choose a chat from the sidebar to start messaging</p>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-[600px] border rounded-lg overflow-hidden">
+    <div className="flex flex-col h-[600px] border border-border rounded-lg overflow-hidden bg-background">
       {/* Chat header */}
-      <div className="flex items-center justify-between p-4 border-b bg-white">
+      <div className="flex items-center justify-between p-4 border-b border-border bg-popover text-popover-foreground">
         <div className="flex items-center">
           <Avatar className="h-10 w-10 mr-3">
             <AvatarImage src={otherUser?.image || ""} alt={otherUser?.name || ""} />
@@ -339,18 +339,18 @@ export function ChatInterface() {
           </Avatar>
           <div>
             <h3 className="font-medium">{otherUser?.name}</h3>
-            <p className="text-xs text-gray-500">{otherUser?.email}</p>
+            <p className="text-xs text-muted-foreground">{otherUser?.email}</p>
           </div>
         </div>
 
         {/* Connection status */}
         <div className="flex items-center">
           {isProduction ? (
-            <Badge variant="secondary" className="text-blue-600">
+            <Badge variant="secondary" className="bg-accent text-accent-foreground">
               Polling Mode
             </Badge>
           ) : isConnected ? (
-            <Badge variant="secondary" className="text-green-600">
+            <Badge variant="secondary" className="bg-green-500/20 text-green-600">
               <Wifi className="h-3 w-3 mr-1" />
               Real-time
             </Badge>
@@ -364,15 +364,14 @@ export function ChatInterface() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
+      <div className="flex-1 p-4 overflow-y-auto bg-secondary/30 text-secondary-foreground">
         {!activeChat.messages || activeChat.messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-gray-500">No messages yet. Start the conversation!</p>
+            <p className="text-muted-foreground">No messages yet. Start the conversation!</p>
           </div>
         ) : (
           activeChat.messages.map((msg) => {
             const isCurrentUser = msg.sender.id === currentUserId
-            // Check if message has listing data (after migration)
             const hasListing = msg.listing && typeof msg.listing === "object"
 
             return (
@@ -386,11 +385,11 @@ export function ChatInterface() {
                 <div className={`max-w-[70%] ${isCurrentUser ? "items-end" : "items-start"} flex flex-col`}>
                   {/* Car information card attached to message */}
                   {hasListing && (
-                    <Card className={`mb-2 ${isCurrentUser ? "bg-blue-50" : "bg-white"} border`}>
+                    <Card className={`mb-2 ${isCurrentUser ? "bg-primary/10" : "bg-secondary"} border-border`}>
                       <CardContent className="p-3">
                         <div className="flex items-center space-x-3">
                           <div className="flex-shrink-0">
-                            <div className="h-12 w-12 bg-gray-100 rounded-md overflow-hidden">
+                            <div className="h-12 w-12 bg-background rounded-md overflow-hidden">
                               {msg.listing?.images && msg.listing.images.length > 0 ? (
                                 <img
                                   src={msg.listing?.images[0] || "/placeholder.svg"}
@@ -398,19 +397,19 @@ export function ChatInterface() {
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
-                                <Car className="h-full w-full p-2 text-gray-400" />
+                                <Car className="h-full w-full p-2 text-muted-foreground" />
                               )}
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-xs font-medium text-gray-900 truncate">{msg.listing?.title}</h4>
-                            <div className="flex items-center text-xs text-gray-500 mt-1">
+                            <h4 className="text-xs font-medium truncate">{msg.listing?.title}</h4>
+                            <div className="flex items-center text-xs text-muted-foreground mt-1">
                               <Car className="h-3 w-3 mr-1" />
                               <span className="truncate">
                                 {msg.listing?.year} {msg.listing?.brand} {msg.listing?.model}
                               </span>
                             </div>
-                            <div className="flex items-center text-xs text-gray-500 mt-1">
+                            <div className="flex items-center text-xs text-muted-foreground mt-1">
                               <DollarSign className="h-3 w-3 mr-1" />
                               <span>KES {msg.listing?.price.toLocaleString()}</span>
                               <MapPin className="h-3 w-3 ml-2 mr-1" />
@@ -432,13 +431,13 @@ export function ChatInterface() {
 
                   {/* Show listing ID if listing data not loaded yet */}
                   {msg.listingId && !hasListing && (
-                    <Card className={`mb-2 ${isCurrentUser ? "bg-blue-50" : "bg-white"} border`}>
+                    <Card className={`mb-2 ${isCurrentUser ? "bg-primary/10" : "bg-secondary"} border-border`}>
                       <CardContent className="p-3">
                         <div className="flex items-center space-x-3">
-                          <Car className="h-8 w-8 text-gray-400" />
+                          <Car className="h-8 w-8 text-muted-foreground" />
                           <div className="flex-1">
-                            <p className="text-xs text-gray-500">Car information loading...</p>
-                            <p className="text-xs text-gray-400">ID: {msg.listingId}</p>
+                            <p className="text-xs text-muted-foreground">Car information loading...</p>
+                            <p className="text-xs text-muted-foreground">ID: {msg.listingId}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -446,9 +445,17 @@ export function ChatInterface() {
                   )}
 
                   {/* Message bubble */}
-                  <div className={`p-3 rounded-lg ${isCurrentUser ? "bg-blue-600 text-white" : "bg-white border"}`}>
+                  <div 
+                    className={`p-3 rounded-lg ${
+                      isCurrentUser 
+                        ? "bg-primary/10 text-primary" 
+                        : "bg-secondary/100 text-secondary-foreground"
+                    }`}
+                  >
                     <p className="text-sm">{msg.content}</p>
-                    <p className={`text-xs mt-1 ${isCurrentUser ? "text-blue-100" : "text-gray-500"}`}>
+                    <p className={`text-xs mt-1 ${
+                      isCurrentUser ? "text-primary" : "text-primary/40"
+                    }`}>
                       {format(new Date(msg.createdAt), "p")}
                     </p>
                   </div>
@@ -461,15 +468,15 @@ export function ChatInterface() {
         {/* Typing indicator (development only) */}
         {!isProduction && typingUsers.length > 0 && (
           <div className="flex justify-start mb-4">
-            <div className="bg-gray-200 rounded-lg px-3 py-2">
+            <div className="bg-accent rounded-lg px-3 py-2 text-accent-foreground">
               <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-accent-foreground rounded-full animate-bounce"></div>
                 <div
-                  className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-accent-foreground rounded-full animate-bounce"
                   style={{ animationDelay: "0.1s" }}
                 ></div>
                 <div
-                  className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-accent-foreground rounded-full animate-bounce"
                   style={{ animationDelay: "0.2s" }}
                 ></div>
               </div>
@@ -481,7 +488,7 @@ export function ChatInterface() {
       </div>
 
       {/* Message input */}
-      <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
+      <form onSubmit={handleSendMessage} className="p-4 border-t border-border bg-popover">
         {/* Car selection dropdown */}
         {availableListings.length > 0 && (
           <div className="mb-3">
@@ -494,16 +501,22 @@ export function ChatInterface() {
                       {availableListings.find((l) => l.id === selectedListingId)?.title}
                     </div>
                   ) : (
-                    <span className="text-gray-500">No car attached</span>
+                    <span className="text-muted-foreground">No car attached</span>
                   )}
                 </SelectValue>
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No car attached</SelectItem>
+              <SelectContent className="bg-popover border-border">
+                <SelectItem value="none" className="hover:bg-accent focus:bg-accent">
+                  No car attached
+                </SelectItem>
                 {availableListings.map((listing) => (
-                  <SelectItem key={listing.id} value={listing.id}>
+                  <SelectItem 
+                    key={listing.id} 
+                    value={listing.id}
+                    className="hover:bg-accent focus:bg-accent"
+                  >
                     <div className="flex items-center">
-                      <Car className="h-4 w-4 mr-2" />
+                      <Car className="h-4 w-4 mr-2 text-muted-foreground" />
                       {listing.title} - KES {listing.price.toLocaleString()}
                     </div>
                   </SelectItem>
@@ -518,10 +531,15 @@ export function ChatInterface() {
             value={message}
             onChange={(e) => handleTyping(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 mr-2"
+            className="flex-1 mr-2 bg-background border-border"
             disabled={isLoading}
           />
-          <Button type="submit" size="icon" disabled={isLoading || !message.trim()}>
+          <Button 
+            type="submit" 
+            size="icon" 
+            disabled={isLoading || !message.trim()}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>

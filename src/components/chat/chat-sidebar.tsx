@@ -26,8 +26,8 @@ export function ChatSidebar() {
   if (chats.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[600px] border rounded-lg p-4">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No conversations yet</h3>
-        <p className="text-gray-600 text-center">
+        <h3 className="text-lg font-medium mb-2 text-muted-foreground">No conversations yet</h3>
+        <p className=" text-center">
           When you contact sellers or receive inquiries, your conversations will appear here
         </p>
       </div>
@@ -36,7 +36,7 @@ export function ChatSidebar() {
 
   return (
     <div className="h-[600px] border rounded-lg overflow-hidden">
-      <div className="p-4 border-b bg-gray-50">
+      <div className="p-4 border-b bg-background text-foreground">
         <h3 className="font-medium">Messages</h3>
       </div>
       <div className="overflow-y-auto h-[calc(600px-57px)]">
@@ -50,7 +50,7 @@ export function ChatSidebar() {
           return (
             <div
               key={chat.id}
-              className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${activeChat?.id === chat.id ? "bg-blue-50" : ""
+              className={`p-4 border-b cursor-pointer hover:bg-muted transition-colors ${activeChat?.id === chat.id ? "bg-muted" : ""
                 }`}
               onClick={() => setActiveChat(chat.id)}
             >
@@ -67,7 +67,7 @@ export function ChatSidebar() {
                     )}
                   </div>
                   <div className="flex justify-between items-center">
-                    <p className="text-sm text-gray-600 truncate">
+                    <p className="text-sm truncate">
                       {lastMessage
                         ? `${lastMessage.sender.id === session?.user?.id ? "You: " : ""}${lastMessage.content}`
                         : "No messages yet"}

@@ -144,12 +144,12 @@ export default function FavoritesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background text-foreground">
 
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Favorites</h1>
-          <p className="text-gray-600">Cars you've saved for later</p>
+          <h1 className="text-3xl font-bold ">My Favorites</h1>
+          <p className="text-muted-foreground">Cars you've saved for later</p>
         </div>
 
         {favorites.length === 0 ? (
@@ -157,7 +157,7 @@ export default function FavoritesPage() {
             <CardContent className="text-center py-12">
               <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No favorites yet</h3>
-              <p className="text-gray-600">Start browsing cars and save your favorites here</p>
+              <p className="text-muted-foreground">Start browsing cars and save your favorites here</p>
             </CardContent>
           </Card>
         ) : (
@@ -174,7 +174,7 @@ export default function FavoritesPage() {
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h3 className="text-lg font-semibold">{favorite.listing.title}</h3>
-                        <p className="text-gray-600">
+                        <p className="text-muted-foreground">
                           {favorite.listing.year} {favorite.listing.brand} {favorite.listing.model}
                         </p>
                       </div>
@@ -189,14 +189,14 @@ export default function FavoritesPage() {
                     </div>
 
                     <div className="space-y-2 mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
+                      <div className="flex items-center text-sm text-muted-foreground">
                         <DollarSign className="h-4 w-4 mr-1" />${favorite.listing.price.toLocaleString()}
                       </div>
-                      <div className="flex items-center text-sm text-gray-600">
+                      <div className="flex items-center text-sm text-muted-foreground">
                         <MapPin className="h-4 w-4 mr-1" />
                         {favorite.listing.location}
                       </div>
-                      <div className="flex items-center text-sm text-gray-600">
+                      <div className="flex items-center text-sm text-muted-foreground">
                         <Car className="h-4 w-4 mr-1" />
                         {favorite.listing.carType}
                       </div>

@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/sheet"
 import Loading from "./loading"
 import AnalyticsPage from "./@analytics/page"
+import { ModeToggle } from "@/components/theme-toggle"
 // import Loading from "@/app/loading"
 
 // Navigation configuration
@@ -78,7 +79,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
                 href={item.href}
                 onClick={mobile ? closeMobileMenu : undefined}
                 className={classNames(
-                    active ? "bg-gray-100 text-gray-900" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900",
+                    active ? "bg-background text-foreground"
+                        : "bg-background text-foreground hover:text-foreground/80",
                     mobile ? "block px-3 py-2 rounded-md text-base font-medium" : "px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1"
                 )}
                 aria-current={active ? "page" : undefined}
@@ -98,7 +100,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 md:hidden"
+                    className="inline-flex items-center justify-center rounded-md p-2 bg-background text-foreground hover:text-foreground/80 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 md:hidden"
                 >
                     <span className="sr-only">Open main menu</span>
                     <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
@@ -231,7 +233,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
         return (
             <div className="flex items-center space-x-4">
                 <div className="hidden md:flex items-center space-x-2">
-                    <span className="text-sm text-gray-700">{session.user?.name}</span>
+                    <span className="text-sm ">{session.user?.name}</span>
                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                         {session.user?.role}
                     </span>
@@ -239,7 +241,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
 
                 <Menu as="div" className="relative ml-3">
                     <div>
-                        <Menu.Button className="relative flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+                        <Menu.Button className="relative flex rounded-full bg-background text-foreground hover:text-foreground/80 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
                             <span className="absolute -inset-1.5" />
                             <span className="sr-only">Open user menu</span>
                             <img
@@ -258,14 +260,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
                         leaveFrom="transform opacity-100 scale-100"
                         leaveTo="transform opacity-0 scale-95"
                     >
-                        <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-background text-foreground py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                             <Menu.Item>
                                 {({ active }) => (
                                     <Link
                                         href="/profile"
                                         className={classNames(
-                                            active ? "bg-gray-100" : "",
-                                            "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            active ? "bg-background" : "",
+                                            "block px-4 py-2 text-sm  hover:text-foreground/80"
                                         )}
                                     >
                                         <div className="flex items-center gap-2">
@@ -280,8 +282,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
                                     <Link
                                         href="/settings"
                                         className={classNames(
-                                            active ? "bg-gray-100" : "",
-                                            "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            active ? "bg-background" : "",
+                                            "block px-4 py-2 text-sm  hover:text-foreground/80"
                                         )}
                                     >
                                         <div className="flex items-center gap-2">
@@ -297,8 +299,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
                                         <AlertDialogTrigger asChild>
                                             <button
                                                 className={classNames(
-                                                    active ? "bg-gray-100" : "",
-                                                    "w-full text-left px-4 py-2 text-sm text-gray-700 flex items-center gap-2 hover:bg-gray-100"
+                                                    active ? "bg-background" : "",
+                                                    "w-full text-left px-4 py-2 text-sm  flex items-center gap-2 hover:text-foreground/80"
                                                 )}
                                             >
                                                 <LogOut className="h-4 w-4" />
@@ -323,13 +325,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
                         </Menu.Items>
                     </Transition>
                 </Menu>
+
+                <ModeToggle />
             </div>
         )
     }
 
     const renderContent = () => (
         <div className="flex flex-col min-h-screen">
-            <nav className="bg-white shadow-sm border-b">
+            <nav className="bg-background text-foreground hover:text-foreground/80 shadow-sm border-b">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 justify-between">
                         <div className="flex">
@@ -339,7 +343,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
                             <div className="flex flex-shrink-0 items-center">
                                 <Link href="/" className="flex items-center space-x-2">
                                     <Car className="h-8 w-8 text-blue-600" />
-                                    <span className="text-xl font-bold text-gray-900">CarMatch</span>
+                                    <span className="text-xl font-bold ">CarMatch</span>
                                 </Link>
                             </div>
                             <div className="hidden md:ml-6 md:flex md:items-center md:space-x-1">
@@ -362,7 +366,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
                     {children}
                 </div>
                 {pathname === "/dashboard" && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-7xl mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 max-w-7xl mx-auto">
                         <div key="analytics" className="h-full">
                             {analytics}
                         </div>
@@ -383,7 +387,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
             <div className="min-h-screen flex justify-center items-center">
                 <Loading
                     message="Please wait..."
-                    className="bg-gray/50"
+                    className=""
                     spinnerClassName="text-blue-600 h-16 w-16"
                     messageClassName="text-xl"
                 />

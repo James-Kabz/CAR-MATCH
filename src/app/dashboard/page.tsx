@@ -23,12 +23,11 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className=" bg-gray-50">
-
+    <div className="bg-background text-foreground">
       <div className="text-center mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Welcome back, {session.user?.name}!</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold">Welcome back, {session.user?.name}!</h1>
+          <p className="text-muted-foreground">
             {session.user?.role === "BUYER"
               ? "Find your perfect car match...Here is some analytics data"
               : "Manage your listings and connect with buyers...Here is some analytics data"}
