@@ -1,3 +1,4 @@
+import {heroui} from '@heroui/theme';
 const { fontFamily } = require("tailwindcss/defaultTheme")
 
 /** @type {import('tailwindcss').Config} */
@@ -6,6 +7,7 @@ module.exports = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/@heroui/theme/dist/components/spinner.js"
   ],
   theme: {
     extend: {
@@ -54,5 +56,5 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [heroui()],
 }

@@ -29,7 +29,6 @@ import {
 import Loading from "./loading"
 import AnalyticsPage from "./@analytics/page"
 import { ModeToggle } from "@/components/theme-toggle"
-// import Loading from "@/app/loading"
 
 // Navigation configuration
 const NAVIGATION_CONFIG = {
@@ -334,7 +333,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
     const renderContent = () => (
         <div className="flex flex-col min-h-screen">
             <nav className="bg-background text-foreground hover:text-foreground/80 shadow-sm border-b">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="mx-auto px-4 sm:px-6 lg:px-20">
                     <div className="flex h-16 justify-between">
                         <div className="flex">
                             <div className="-ml-2 mr-2 flex items-center md:hidden">
@@ -361,12 +360,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
                     </div>
                 </div>
             </nav>
-            <main className={pathname === "/dashboard" ? "flex flex-col gap-4" : "flex flex-col"}>
+            <main className={pathname === "/dashboard" ? "flex flex-col gap-4 " : "flex flex-col"}>
                 <div key="children">
                     {children}
                 </div>
                 {pathname === "/dashboard" && (
-                    <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 max-w-7xl mx-auto">
+                    <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 py-8 px-4 sm:px-6 lg:px-20">
                         <div key="analytics" className="h-full">
                             {analytics}
                         </div>
@@ -387,9 +386,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, analytics, 
             <div className="min-h-screen flex justify-center items-center">
                 <Loading
                     message="Please wait..."
-                    className=""
+                    className="bg-gray/50"
                     spinnerClassName="text-blue-600 h-16 w-16"
-                    messageClassName="text-xl"
+                    messageClassName="text-xl text-white"
                 />
             </div>}>
             {renderContent()}

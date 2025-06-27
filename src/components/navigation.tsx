@@ -15,7 +15,7 @@ export function Navigation() {
 
   return (
     <nav className="bg-background text-foreground border-b border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-8">
             {/* Logo */}

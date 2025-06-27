@@ -16,7 +16,7 @@ export function ChatSidebar() {
       <div className="flex items-center justify-center h-[600px] border rounded-lg p-4">
         <InlineLoading
           message="Loading chats..."
-          size="md"
+          size="lg"
           className="text-blue-600"
         />
       </div>

@@ -452,7 +452,7 @@ export function SellerDashboard() {
                 <CardContent className="text-center py-8">
                   <Car className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No listings yet</h3>
-                  <p className="text-gray-600">Create your first listing to start selling</p>
+                  <p className="text-accent-foreground">Create your first listing to start selling</p>
                 </CardContent>
               </Card>
             ) : (
@@ -469,7 +469,7 @@ export function SellerDashboard() {
                         <div className="flex justify-between items-start mb-4">
                           <div>
                             <h3 className="text-lg font-semibold">{listing.title}</h3>
-                            <p className="text-gray-600">
+                            <p className="text-accent-foreground">
                               {listing.year} {listing.brand} {listing.model}
                             </p>
                           </div>
@@ -482,30 +482,30 @@ export function SellerDashboard() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                          <div className="flex items-center text-sm text-gray-600">
+                          <div className="flex items-center text-sm text-accent-foreground">
                             <DollarSign className="h-4 w-4 mr-1" />
                             KES {listing.price.toLocaleString()}
                           </div>
-                          <div className="flex items-center text-sm text-gray-600">
+                          <div className="flex items-center text-sm text-accent-foreground">
                             <MapPin className="h-4 w-4 mr-1" />
                             {listing.location}
                           </div>
-                          <div className="flex items-center text-sm text-gray-600">
+                          <div className="flex items-center text-sm text-accent-foreground">
                             <Car className="h-4 w-4 mr-1" />
                             {listing.carType}
                           </div>
-                          <div className="flex items-center text-sm text-gray-600">
+                          <div className="flex items-center text-sm text-accent-foreground">
                             <Calendar className="h-4 w-4 mr-1" />
                             {new Date(listing.createdAt).toLocaleDateString()}
                           </div>
                         </div>
 
                         {listing.description && (
-                          <p className="text-gray-600 text-sm mb-4 line-clamp-2">{listing.description}</p>
+                          <p className="text-accent-foreground text-sm mb-4 line-clamp-2">{listing.description}</p>
                         )}
 
                         <div className="flex justify-between items-center">
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-200">
                             {listing.mileage && `${listing.mileage.toLocaleString()} km`}
                           </div>
                           <div className="space-x-2">
@@ -573,7 +573,7 @@ export function SellerDashboard() {
               <CardContent className="text-center py-8">
                 <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No inquiries yet</h3>
-                <p className="text-gray-600">
+                <p className="text-accent-foreground">
                   When buyers are interested in your cars, their messages will appear here
                 </p>
               </CardContent>
@@ -586,7 +586,7 @@ export function SellerDashboard() {
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h3 className="text-lg font-semibold">{inquiry.listing.title}</h3>
-                        <p className="text-gray-600">From: {inquiry.buyer.name}</p>
+                        <p className="text-accent-foreground">From: {inquiry.buyer.name}</p>
                       </div>
                       <Badge variant={inquiry.status === "PENDING" ? "destructive" : "default"}>{inquiry.status}</Badge>
                     </div>
