@@ -1,6 +1,6 @@
 # Stage 1: Build
 FROM node:22.17.0-alpine3.21 AS builder
-WORKDIR /src/app
+WORKDIR /app
 
 # Copy package files and Prisma schema first
 COPY package*.json ./
@@ -20,15 +20,15 @@ RUN npm run build
 
 # Stage 2: Production
 FROM node:22.17.0-alpine3.21
-WORKDIR /src/app
+WORKDIR /app
 
-# Copy production files
-COPY --from=builder /src/app/.next ./.next
-COPY --from=builder /src/app/node_modules ./node_modules
-COPY --from=builder /src/app/package*.json ./
-COPY --from=builder /src/app/public ./public
-COPY --from=builder /src/app/prisma ./prisma 
-COPY --from=builder /src/app/api ./api
+# Copy production files from builder
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/next.config.* ./
 
 # Install only production dependencies
 RUN npm ci --omit=dev && npm cache clean --force

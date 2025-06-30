@@ -5,15 +5,8 @@
       "src": "package.json",
       "use": "@vercel/next",
       "config": {
-        "distDir": ".next",
-        "includeFiles": ["src/app/**", "src/app/api/**"]
+        "distDir": ".next"
       }
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/src/app/api/$1"
     }
   ]
 }
