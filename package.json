@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "postinstall": "npx prisma generate",
-    "seed:listings": "tsx scripts/seed-listings.ts"
+    "seed:listings": "tsx scripts/seed-listings.ts",
+    "vercel-build": "prisma generate && next build"
+
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",
