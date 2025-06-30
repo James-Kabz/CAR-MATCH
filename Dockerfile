@@ -28,6 +28,7 @@ COPY --from=builder /src/app/node_modules ./node_modules
 COPY --from=builder /src/app/package*.json ./
 COPY --from=builder /src/app/public ./public
 COPY --from=builder /src/app/prisma ./prisma 
+COPY --from=builder /src/app/api ./api
 
 # Install only production dependencies
 RUN npm ci --omit=dev && npm cache clean --force
